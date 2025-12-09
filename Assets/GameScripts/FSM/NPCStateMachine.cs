@@ -13,7 +13,9 @@ public class NPCStateMachine
 
         if (currentState != null)
             currentState.Exit();
-        
+
+        //Debug.Log($"{currentState} || {newState}");
+
         currentState = newState;
         currentState.Enter();
         

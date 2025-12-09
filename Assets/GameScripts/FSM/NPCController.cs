@@ -5,33 +5,45 @@ using UnityEngine.AI;
 
 public class NPCController : MonoBehaviour
 {
+    [Header("Cone of vision")]
     [SerializeField] private float range = 6f;
     [SerializeField] private float angle = 80f;
     [SerializeField] private float eyeHeight = 1.5f;
     [SerializeField] private int segments = 6;
 
     [Space(10)]
+    [Header("Downward cone of vision")]
     [SerializeField] private float secondaryRange = 10f;
     [SerializeField] private float secondaryAngle = 40f;
     [SerializeField] private float secondaryPitch = -45f;
 
     [Space(10)]
-    [SerializeField] private float angularSpeed = 300f;
-
-    [Space(10)]
+    [Header("Hearing circle")]
     [SerializeField] private float hearingRange = 2f;
 
     [Space(10)]
+    [SerializeField] private float angularSpeed = 300f;
+
+    [Header("LayerMasks")]
+    [Space(10)]
     [SerializeField] private LayerMask obstacleMask;
+    [SerializeField] private LayerMask smokeMask;
     public StarterAssets.StarterAssetsInputs PlayerInputs;
 
     [Space(10)]
     public NavMeshAgent agent;
 
     [Space(10)]
+    [Header("Patrol")]
+    public float TimePatrol = 4f;
     public List<Transform> waypoints;
 
+    [Space(10)]
+    public float TimeDesoriented = 2.5f;
+
     private Collider target = null;
+    private bool seeingSmoke = false;
+    private bool isDisoriented = false;
 
     private Mesh viewMesh;
     private Mesh secondaryMesh;
@@ -39,10 +51,13 @@ public class NPCController : MonoBehaviour
 
     private NavMeshAgent navMeshAgent;
 
+    private Vector3 centerpoint = Vector3.zero;
+
     //##############################
     NPCStateMachine npcStateMachine;
     NPCPatrol npcPatrol;
     NPCTracker npcTracker;
+    NPCDisoriented npcDisoriented;
 
     // Start is called before the first frame update
     void Start()
@@ -51,9 +66,11 @@ public class NPCController : MonoBehaviour
         npcStateMachine = new NPCStateMachine();
         npcPatrol = new NPCPatrol(this, npcStateMachine);
         npcTracker = new NPCTracker(this, npcStateMachine);
+        npcDisoriented = new NPCDisoriented(this, npcStateMachine);
 
         npcPatrol.SetDependencies(npcTracker);
-        npcTracker.SetDependencies(npcPatrol);
+        npcTracker.SetDependencies(npcPatrol, npcDisoriented);
+        npcDisoriented.SetDependencies(npcPatrol);
 
         npcStateMachine.changeState(npcPatrol);
 
@@ -76,9 +93,10 @@ public class NPCController : MonoBehaviour
 
         //CHECK PLAYER
         DrawFieldOfViewBorders(false, Color.red);
-        if (DetectPlayerByVision() || DetectPlayerByVisionAbove() || DetectPlayerBySound())
-        {
-            Debug.Log("JOGADOR DETECTADO!");
+
+        if (!isDisoriented) { 
+            if (DetectPlayerByVision() || DetectPlayerByVisionAbove() || DetectPlayerBySound())
+                Debug.Log("JOGADOR DETECTADO!");
         }
         else
             target = null;
@@ -91,18 +109,13 @@ public class NPCController : MonoBehaviour
         }
     }
 
-    public Collider getTarget()
-    {
-        return target;
-    }
+    public Collider getTarget() => target;
 
-    void OnDrawGizmos()
-    {
-        DrawFieldOfViewFilled(Color.red);
-        DrawFieldOfViewBorders(true, Color.red);
-        DrawHearingZone(Color.blue);
-        DrawSecondaryCone(Color.red);
-    }
+    public bool getSeeingSmoke() => seeingSmoke;
+
+    public void setCenterpoint(Vector3 point) => centerpoint = point;
+
+    public void setDisoriented(bool state) => isDisoriented = state;
 
 
     private void HandleRotation()
@@ -125,37 +138,37 @@ public class NPCController : MonoBehaviour
         }
     }
 
+    #region detectPlayer
     private bool DetectPlayerByVision()
     {
         Vector3 origin = transform.position + Vector3.up * eyeHeight;
         Collider[] hits = Physics.OverlapSphere(origin, range);
 
-        foreach (Collider collider in hits)
-        {
-            if (collider.CompareTag("Player"))
-            {
+        RaycastHit hit;
+
+        foreach (Collider collider in hits){
+            if (collider.CompareTag("Player")){
                 Vector3 targetPos = collider.bounds.center;
                 Vector3 dir = (targetPos - origin).normalized;
                 float dist = Vector3.Distance(origin, targetPos);
 
-                if (Vector3.Dot(transform.forward, dir) >= Mathf.Cos(angle * 0.5f * Mathf.Deg2Rad))
-                {
-                    if (!Physics.Raycast(origin, dir, dist, obstacleMask, QueryTriggerInteraction.Collide))
-                    {
+                if (Vector3.Dot(transform.forward, dir) >= Mathf.Cos(angle * 0.5f * Mathf.Deg2Rad)){
+                    if (Physics.Raycast(origin, dir, out hit, dist, obstacleMask, QueryTriggerInteraction.Collide)){
+                        if (((1 << hit.collider.gameObject.layer) & smokeMask) != 0)
+                            seeingSmoke = true; // Visao bloqueada pela FUMACA
+                        else
+                            seeingSmoke = false;
+                    }
+                    else{
                         Debug.DrawLine(origin, targetPos, Color.blue);
                         target = collider;
+                        seeingSmoke = false;
                         return true;
                     }
                 }
             }
         }
-
-        if (agent != null && agent.enabled && agent.hasPath)
-        {
-            // 
-            //agent.isStopped = true; 
-        }
-
+        target = null;
         return false;
     }
 
@@ -165,6 +178,7 @@ public class NPCController : MonoBehaviour
         Collider[] hits = Physics.OverlapSphere(origin, secondaryRange);
 
         Vector3 secondaryForward = (transform.rotation * Quaternion.Euler(-secondaryPitch, 0f, 0f)) * Vector3.forward;
+        RaycastHit hit;
 
         foreach (Collider collider in hits)
         {
@@ -177,10 +191,17 @@ public class NPCController : MonoBehaviour
             float angleToPlayer = Vector3.Angle(secondaryForward, dir);
             if (angleToPlayer <= secondaryAngle * 0.5f)
             {
-                if (!Physics.Raycast(origin, dir, dist, obstacleMask, QueryTriggerInteraction.Collide))
+                if (Physics.Raycast(origin, dir, out hit, dist, obstacleMask, QueryTriggerInteraction.Collide))
                 {
-                    Debug.DrawLine(origin, targetPos, Color.green);
+                    if (((1 << hit.collider.gameObject.layer) & smokeMask) != 0)
+                        seeingSmoke = true; // Visao bloqueada pela FUMACA
+                    else
+                        seeingSmoke = false;
+                }
+                else { 
+                    Debug.DrawLine(origin, targetPos, Color.blue);
                     target = collider;
+                    seeingSmoke = false;
                     return true;
                 }
             }
@@ -202,7 +223,6 @@ public class NPCController : MonoBehaviour
                 if (playerInputs != null &&
                    !playerInputs.crouch && playerInputs.move != Vector2.zero)
                 {
-                    Vector3 targetPos = detectedCollider.bounds.center;
                     target = detectedCollider;
                     return true;
                 }
@@ -210,6 +230,17 @@ public class NPCController : MonoBehaviour
         }
 
         return false;
+    }
+    #endregion
+
+    void OnDrawGizmos()
+    {
+        DrawFieldOfViewFilled(Color.red);
+        DrawFieldOfViewBorders(true, Color.red);
+        DrawHearingZone(Color.blue);
+        DrawSecondaryCone(Color.red);
+        if (centerpoint != Vector3.zero)
+            DrawCenterPatrol();
     }
 
     #region drawDebug
@@ -366,6 +397,15 @@ public class NPCController : MonoBehaviour
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
+    }
+
+
+    private void DrawCenterPatrol()
+    {
+        float s = 0.5f;
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(centerpoint + Vector3.right * s, centerpoint - Vector3.right * s);
+        Gizmos.DrawLine(centerpoint + Vector3.forward * s, centerpoint - Vector3.forward * s);
     }
     #endregion
 }

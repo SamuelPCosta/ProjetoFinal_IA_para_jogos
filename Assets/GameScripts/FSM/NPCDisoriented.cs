@@ -1,0 +1,39 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.AI;
+using UnityEngine;
+
+public class NPCDisoriented : IState
+{
+    NPCController controller;
+    NPCStateMachine machine;
+    NPCPatrol patrol;
+    float timer;
+
+    public NPCDisoriented(NPCController controller, NPCStateMachine machine)
+    {
+        this.controller = controller;
+        this.machine = machine;
+    }
+
+    public void Enter() {
+        controller.agent.ResetPath();
+        controller.setDisoriented(true);
+        timer = controller.TimeDesoriented;
+    }
+
+    void IState.Update()
+    {
+        timer -= Time.deltaTime;
+        if (timer <= 0f) machine.changeState(patrol);
+    }
+
+    public void Exit() {
+        controller.setDisoriented(false);
+    }
+
+    public void SetDependencies(NPCPatrol patrol)
+    {
+        this.patrol = patrol;
+    }
+}

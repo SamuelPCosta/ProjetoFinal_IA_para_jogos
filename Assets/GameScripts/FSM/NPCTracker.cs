@@ -8,6 +8,7 @@ public class NPCTracker : IState
     NPCController controller;
     NPCStateMachine machine;
     NPCPatrol patrol;
+    NPCDisoriented disoriented;
 
     public NPCTracker(NPCController controller, NPCStateMachine machine)
     {
@@ -23,12 +24,17 @@ public class NPCTracker : IState
         {
             machine.changeState(patrol);
         }
+        if (controller.getSeeingSmoke())
+        {
+            machine.changeState(disoriented);
+        }
     }
 
     public void Exit() { }
 
-    public void SetDependencies(NPCPatrol patrol)
+    public void SetDependencies(NPCPatrol patrol, NPCDisoriented disoriented)
     {
         this.patrol = patrol;
+        this.disoriented = disoriented;
     }
 }
