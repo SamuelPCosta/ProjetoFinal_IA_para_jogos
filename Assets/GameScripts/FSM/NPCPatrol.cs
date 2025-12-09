@@ -3,38 +3,55 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class NPCPatrol : MonoBehaviour
+public class NPCPatrol : IState
 {
-    public List<Transform> waypoints;
-    NavMeshAgent navMeshAgent;
-    public int currentWaypointIntex = 0;
-        
-    // Start is called before the first frame update
-    void Start()
+    NPCController controller;
+    NPCStateMachine machine;
+    NPCTracker tracker;
+
+    NavMeshAgent agent;
+    List<Transform> waypoints;
+    int index;
+
+    public NPCPatrol(NPCController controller, NPCStateMachine machine)
     {
-        navMeshAgent = GetComponent<NavMeshAgent>();
+        this.controller = controller;
+        this.machine = machine;
+
+        agent = controller.agent;
+        waypoints = controller.waypoints;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void Enter() { }
+
+    void IState.Update()
     {
         Patrol();
+
+        if (controller.getTarget() != null)
+        {
+            machine.changeState(tracker);
+        }
     }
 
-    private void Patrol()
+    public void Exit() { }
+
+    void Patrol()
     {
-        if (waypoints.Count == 0)
-        {
-            return;
-        }
+        if (waypoints.Count == 0) return;
 
-        float distanceToWayPoint = Vector3.Distance(waypoints[currentWaypointIntex].position, transform.position);
+        float d = Vector3.Distance(waypoints[index].position, controller.transform.position);
+        if (d <= 2) index = (index + 1) % waypoints.Count;
 
-        if (distanceToWayPoint <= 2)
-        {
-            currentWaypointIntex = (currentWaypointIntex + 1) % waypoints.Count;
-        }
+        agent.SetDestination(waypoints[index].position);
+    }
 
-        navMeshAgent.SetDestination(waypoints[currentWaypointIntex].position);
+    public void SetTracker(NPCTracker t)
+    {
+        tracker = t;
+    }
+
+    public void SetDependencies(NPCTracker npcTracker) {
+        this.tracker = npcTracker;
     }
 }
