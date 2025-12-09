@@ -21,6 +21,8 @@ namespace StarterAssets
         [Tooltip("Sprint speed of the character in m/s")]
         public float SprintSpeed = 5.335f;
 
+        public float CrouchedSpeed = 1.2f;
+
         [Tooltip("How fast the character turns to face movement direction")]
         [Range(0.0f, 0.3f)]
         public float RotationSmoothTime = 0.12f;
@@ -45,6 +47,14 @@ namespace StarterAssets
 
         [Tooltip("Time required to pass before entering the fall state. Useful for walking down stairs")]
         public float FallTimeout = 0.15f;
+
+        [Space(10)]
+        public bool dashing;
+        public float dashTime = 0.15f;
+        public float dashSpeed = 15f;
+        private float dashTimer;
+        public float dashCooldown = 15f;
+        private float dashCooldownTimer;
 
         [Header("Player Grounded")]
         [Tooltip("If the character is grounded or not. Not part of the CharacterController built in grounded check")]
@@ -157,6 +167,7 @@ namespace StarterAssets
             _hasAnimator = TryGetComponent(out _animator);
 
             JumpAndGravity();
+            Dash();
             GroundedCheck();
             Move();
         }
@@ -215,6 +226,7 @@ namespace StarterAssets
         {
             // set target speed based on move speed, sprint speed and if sprint is pressed
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            targetSpeed = _input.crouch ? CrouchedSpeed : targetSpeed;
 
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
@@ -346,6 +358,29 @@ namespace StarterAssets
             {
                 _verticalVelocity += Gravity * Time.deltaTime;
             }
+        }
+
+        private void Dash()
+        {
+            if (dashCooldownTimer > 0f) dashCooldownTimer -= Time.deltaTime;
+
+            if (_input.dash && Grounded && dashCooldownTimer <= 0f) { 
+                print("dash");
+                dashing = true;
+                dashTimer = dashTime;
+                dashCooldownTimer = dashCooldown;
+                _input.dash = false;
+            }
+
+            if (dashing)
+            {
+                dashTimer -= Time.deltaTime;
+                Vector3 dir = transform.forward;
+                _controller.Move(dir * dashSpeed * Time.deltaTime);
+                if (dashTimer <= 0f) dashing = false;
+            }
+
+            _input.dash = false;
         }
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
