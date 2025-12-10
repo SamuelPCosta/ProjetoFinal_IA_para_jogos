@@ -12,8 +12,12 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+
+    //##################### AQUI
     public GameObject smokeGranade;
     public Transform dropObjectPoint;
+    [SerializeField] private LayerMask doorLayer;
+
 
 #if ENABLE_INPUT_SYSTEM
     private PlayerInput _playerInput;
@@ -47,12 +51,30 @@ private StarterAssets.StarterAssetsInputs _input;
     // Update is called once per frame
     void Update()
     {
-        if (_input.interact && !_input.jump)
-        {
-            print("smoke");
-            _input.interact = false;
-
-            Instantiate(smokeGranade, dropObjectPoint.position, dropObjectPoint.rotation);
+        if (_input.interact){
+            GameObject door = CheckRangeDoor();
+            if(door != null){
+                DoorController doorController = door.GetComponent<DoorController>();
+                doorController.LockDoor();
+                print("LockDoor");
+            }
+            else { 
+                _input.interact = false;
+                Instantiate(smokeGranade, dropObjectPoint.position, dropObjectPoint.rotation);
+                print("smoke");
+            }
         }
+    }
+
+    private GameObject CheckRangeDoor()
+    {
+        Collider playerCol = GetComponent<CharacterController>();
+        Collider[] hits = Physics.OverlapBox(playerCol.bounds.center, playerCol.bounds.extents, Quaternion.identity, doorLayer);
+        if (hits.Length > 0)
+        {
+            if (hits[0].transform.parent != null) return hits[0].transform.parent.gameObject;
+            return null;
+        }
+        return null;
     }
 }
