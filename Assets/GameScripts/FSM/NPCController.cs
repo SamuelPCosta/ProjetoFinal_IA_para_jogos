@@ -18,8 +18,11 @@ public class NPCController : MonoBehaviour
     [SerializeField] private float secondaryPitch = -45f;
 
     [Space(10)]
-    [Header("Hearing circle")]
+    [Header("Hearing")]
     [SerializeField] private float hearingRange = 2f;
+
+    [Space(10)]
+    [SerializeField] private float hearingRangeProjectile = 4f;
 
     [Space(10)]
     [SerializeField] private float angularSpeed = 300f;
@@ -233,11 +236,23 @@ public class NPCController : MonoBehaviour
     }
     #endregion
 
+    public void checkNoise(Vector3 collisionPoint)
+    {
+        Vector3 a = new Vector3(transform.position.x, 0, transform.position.z);
+        Vector3 b = new Vector3(collisionPoint.x, 0, collisionPoint.z);
+        float d = Vector3.Distance(a, b);
+        if (d <= hearingRangeProjectile)
+        {
+            print("ouviu");
+        }
+    }
+
     void OnDrawGizmos()
     {
         DrawFieldOfViewFilled(Color.red);
         DrawFieldOfViewBorders(true, Color.red);
         DrawHearingZone(Color.blue);
+        DrawHearingZoneProjectile(Color.blue);
         DrawSecondaryCone(Color.red);
         if (centerpoint != Vector3.zero)
             DrawCenterPatrol();
@@ -360,6 +375,21 @@ public class NPCController : MonoBehaviour
         {
             float a = i * Mathf.PI * 2f / seg;
             Vector3 cur = c + new Vector3(Mathf.Cos(a) * hearingRange, 1f, Mathf.Sin(a) * hearingRange);
+            Gizmos.DrawLine(last, cur);
+            last = cur;
+        }
+    }
+
+    private void DrawHearingZoneProjectile(Color color)
+    {
+        Gizmos.color = color * 0.5f;
+        int seg = 32;
+        Vector3 c = transform.position;
+        Vector3 last = c + new Vector3(hearingRangeProjectile, 1f, 0);
+        for (int i = 1; i <= seg; i++)
+        {
+            float a = i * Mathf.PI * 2f / seg;
+            Vector3 cur = c + new Vector3(Mathf.Cos(a) * hearingRangeProjectile, 1f, Mathf.Sin(a) * hearingRangeProjectile);
             Gizmos.DrawLine(last, cur);
             last = cur;
         }

@@ -14,7 +14,8 @@ namespace StarterAssets
 		public bool sprint;
 		public bool dash;
 		public bool crouch;
-		public bool interact;
+		public bool smoke;
+		public bool action;
 
 		[Header("Movement Settings")]
 		public bool analogMovement;
@@ -57,10 +58,16 @@ namespace StarterAssets
 			CrouchInput(value.isPressed);
 		}
 
-		public void OnInteract(InputValue value)
+		public void OnSmoke(InputValue value)
 		{
-			InteractInput(value.isPressed);
+			SmokeInput(value.isPressed);
 		}
+
+		public void OnAction(InputValue value)
+		{
+			ActionInput(value.isPressed);
+		}
+
 #endif
 
 
@@ -94,9 +101,14 @@ namespace StarterAssets
 			crouch = newCrouchState;
 		}
 
-		public void InteractInput(bool newInteractState)
+		public void SmokeInput(bool newSmokeState)
 		{
-			interact = newInteractState;
+			smoke = newSmokeState;
+		}
+
+		public void ActionInput(bool newActionState)
+		{
+			action = newActionState;
 		}
 
 		private void OnApplicationFocus(bool hasFocus)

@@ -1112,25 +1112,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f237ec4ce6f3fe4ca0d450c730757a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  range: 6
-  angle: 80
+  range: 8
+  angle: 100
   eyeHeight: 1.5
   segments: 6
   secondaryRange: 10
   secondaryAngle: 40
   secondaryPitch: -45
+  hearingRange: 2.75
+  hearingRangeProjectile: 8
   angularSpeed: 300
-  hearingRange: 2
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 129
+  smokeMask:
+    serializedVersion: 2
+    m_Bits: 128
   PlayerInputs: {fileID: 0}
   agent: {fileID: 6905172017184528934}
+  TimePatrol: 8
   waypoints:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  TimeDesoriented: 3
 --- !u!136 &8642321260324386739
 CapsuleCollider:
   m_ObjectHideFlags: 0
