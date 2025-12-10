@@ -33,11 +33,21 @@ public class NPCPatrol : IState
     public void Enter() { }
 
     void IState.Update(){
-        Patrol();
-
+        
         if (controller.getTarget() != null){
             machine.changeState(tracker);
         }
+        if (controller.getNoise() != Vector3.zero)
+        {
+            machine.changeState(tracker);
+        }
+
+        Patrol();
+
+        //if (controller.getTarget() != null)
+        //{
+        //    machine.changeState(checkNoise);
+        //}
     }
 
     public void Exit() {

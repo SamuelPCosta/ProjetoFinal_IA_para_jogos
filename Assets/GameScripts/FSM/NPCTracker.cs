@@ -10,17 +10,27 @@ public class NPCTracker : IState
     NPCPatrol patrol;
     NPCDisoriented disoriented;
 
+    private bool checkingNoise = false; 
+
     public NPCTracker(NPCController controller, NPCStateMachine machine)
     {
         this.controller = controller;
         this.machine = machine;
     }
 
-    public void Enter() { }
+    public void Enter() {}
 
     void IState.Update()
     {
-        if (controller.getTarget() == null)
+        if (checkingNoise){
+            if (!controller.agent.pathPending && controller.agent.remainingDistance <= controller.agent.stoppingDistance)
+            {
+                checkingNoise = false;
+                controller.noiseChecked();
+            }
+        }
+
+        if (controller.getTarget() == null && controller.getNoise() == Vector3.zero)
         {
             machine.changeState(patrol);
         }
@@ -28,9 +38,20 @@ public class NPCTracker : IState
         {
             machine.changeState(disoriented);
         }
+
+        if(controller.getTarget() != null)
+            controller.agent.SetDestination(controller.getTarget().bounds.center);
+        else if(controller.getNoise() != Vector3.zero) { 
+            controller.agent.SetDestination(controller.getNoise());
+            checkingNoise = true;
+            Debug.Log("conferindo lugar com ruido");
+        }
     }
 
-    public void Exit() { }
+    public void Exit() {
+        checkingNoise = false;
+        controller.noiseChecked();
+    }
 
     public void SetDependencies(NPCPatrol patrol, NPCDisoriented disoriented)
     {

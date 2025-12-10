@@ -1328,6 +1328,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: NPC (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 4631382035779080308, guid: 128955abaf9579d48ba7dfc941b6f828,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4645630393581876815, guid: 128955abaf9579d48ba7dfc941b6f828,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -10460,6 +10465,11 @@ PrefabInstance:
       propertyPath: PlayerInputs
       value: 
       objectReference: {fileID: 135756641613574975}
+    - target: {fileID: 4206624935916997455, guid: 128955abaf9579d48ba7dfc941b6f828,
+        type: 3}
+      propertyPath: hearingRangeProjectile
+      value: 7.5
+      objectReference: {fileID: 0}
     - target: {fileID: 4206624935916997455, guid: 128955abaf9579d48ba7dfc941b6f828,
         type: 3}
       propertyPath: waypoints.Array.data[0]

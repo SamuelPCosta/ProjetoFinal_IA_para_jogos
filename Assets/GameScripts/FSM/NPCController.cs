@@ -56,6 +56,8 @@ public class NPCController : MonoBehaviour
 
     private Vector3 centerpoint = Vector3.zero;
 
+    private Vector3 noiseSource = Vector3.zero;
+
     //##############################
     NPCStateMachine npcStateMachine;
     NPCPatrol npcPatrol;
@@ -95,21 +97,18 @@ public class NPCController : MonoBehaviour
         npcStateMachine.Update();
 
         //CHECK PLAYER
-        DrawFieldOfViewBorders(false, Color.red);
+        //DrawFieldOfViewBorders(false, Color.red);
 
-        if (!isDisoriented) { 
+        if (!isDisoriented) {
             if (DetectPlayerByVision() || DetectPlayerByVisionAbove() || DetectPlayerBySound())
                 Debug.Log("JOGADOR DETECTADO!");
+            else
+                target = null;
         }
         else
             target = null;
 
         HandleRotation();
-
-        if (target){
-            if (agent != null)
-                agent.SetDestination(target.bounds.center);
-        }
     }
 
     public Collider getTarget() => target;
@@ -171,7 +170,6 @@ public class NPCController : MonoBehaviour
                 }
             }
         }
-        target = null;
         return false;
     }
 
@@ -209,7 +207,6 @@ public class NPCController : MonoBehaviour
                 }
             }
         }
-
         return false;
     }
 
@@ -243,8 +240,17 @@ public class NPCController : MonoBehaviour
         float d = Vector3.Distance(a, b);
         if (d <= hearingRangeProjectile)
         {
+            //target = collisionPoint;
             print("ouviu");
+            noiseSource = collisionPoint;
         }
+    }
+
+    public Vector3 getNoise() => noiseSource;
+
+    public void noiseChecked()
+    {
+        noiseSource = Vector3.zero;
     }
 
     void OnDrawGizmos()
