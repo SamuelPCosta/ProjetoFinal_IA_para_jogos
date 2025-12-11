@@ -124,7 +124,7 @@ public class NPCCover : IState
             {
                 targetPos = targetNPC.transform.position;
 
-                agent.updateRotation = false;
+                //agent.updateRotation = false;
                 agent.SetDestination(targetPos);
 
                 Vector3 dir = controller.transform.position - targetPos;
