@@ -39,6 +39,10 @@ public class PlayerController : MonoBehaviour
 
     public LineRenderer line;
 
+    public Transform aimObject;
+
+    public LayerMask projetileLayer;
+
 #if ENABLE_INPUT_SYSTEM
     private PlayerInput _playerInput;
 #endif
@@ -101,6 +105,7 @@ private StarterAssets.StarterAssetsInputs _input;
         spawnPoint.rotation = Quaternion.Euler(euler);
 
         DrawTrajectory();
+        UpdateAim();
         if (Input.GetKeyDown(KeyCode.R))
         {
             LaunchProjectile();
@@ -191,6 +196,28 @@ private StarterAssets.StarterAssetsInputs _input;
             pos.y = start.y + parameters.initialVy * t - 0.5f * parameters.g * t * t;
 
             line.SetPosition(i, pos);
+        }
+    }
+
+    void UpdateAim()
+    {
+        Vector3 start = spawnPoint.position;
+        var p = CalculateLaunchParameters(start, targetPoint.position, maxHeight, horizontalBoost);
+        Vector3 vel = new Vector3(p.planarVel.x, p.initialVy, p.planarVel.z);
+        Vector3 last = start;
+        int steps = 60;
+        for (int i = 1; i <= steps; i++)
+        {
+            int everythingButProjectile = ~projetileLayer;
+            float t = p.totalTime * i / steps;
+            Vector3 cur = start + new Vector3(vel.x * t, vel.y * t - 0.5f * p.g * t * t, vel.z * t);
+            Vector3 dir = cur - last;
+            if (Physics.Raycast(last, dir.normalized, out var hit, dir.magnitude, everythingButProjectile))
+            {
+                aimObject.position = hit.point;
+                return;
+            }
+            last = cur;
         }
     }
 }

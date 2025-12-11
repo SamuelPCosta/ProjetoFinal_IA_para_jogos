@@ -40,6 +40,7 @@ public class NPCController : MonoBehaviour
     [Header("Patrol")]
     public float TimePatrol = 4f;
     public List<Transform> waypoints;
+    public List<Transform> coverWaypoints;
 
     [Space(10)]
     public float TimeDesoriented = 2.5f;
@@ -52,33 +53,24 @@ public class NPCController : MonoBehaviour
     private Mesh secondaryMesh;
     private Vector3 lastTargetPosition;
 
-    private NavMeshAgent navMeshAgent;
-
     private Vector3 centerpoint = Vector3.zero;
 
     private Vector3 noiseSource = Vector3.zero;
+
+    private bool cover = false;
+
+    private int index = -1;
 
     //##############################
     NPCStateMachine npcStateMachine;
     NPCPatrol npcPatrol;
     NPCTracker npcTracker;
     NPCDisoriented npcDisoriented;
+    NPCCover npcCover;
 
     // Start is called before the first frame update
     void Start()
     {
-        //INICIALIZACAO DOS ESTADOS
-        npcStateMachine = new NPCStateMachine();
-        npcPatrol = new NPCPatrol(this, npcStateMachine);
-        npcTracker = new NPCTracker(this, npcStateMachine);
-        npcDisoriented = new NPCDisoriented(this, npcStateMachine);
-
-        npcPatrol.SetDependencies(npcTracker);
-        npcTracker.SetDependencies(npcPatrol, npcDisoriented);
-        npcDisoriented.SetDependencies(npcPatrol);
-
-        npcStateMachine.changeState(npcPatrol);
-
         // DEBUG E ATRIBUICOES
         agent = GetComponent<NavMeshAgent>();
         agent.updateRotation = true;
@@ -88,7 +80,19 @@ public class NPCController : MonoBehaviour
             Debug.LogError("Componente NavMeshAgent ausente no NPC!");
         }
 
-        navMeshAgent = GetComponent<NavMeshAgent>();
+        //INICIALIZACAO DOS ESTADOS
+        npcStateMachine = new NPCStateMachine();
+        npcPatrol = new NPCPatrol(this, npcStateMachine);
+        npcTracker = new NPCTracker(this, npcStateMachine);
+        npcDisoriented = new NPCDisoriented(this, npcStateMachine);
+        npcCover = new NPCCover(this, npcStateMachine);
+
+        npcPatrol.SetDependencies(npcTracker, npcCover);
+        npcTracker.SetDependencies(npcPatrol, npcDisoriented);
+        npcDisoriented.SetDependencies(npcPatrol);
+        npcCover.SetDependencies(npcPatrol, npcTracker);
+
+        npcStateMachine.changeState(npcPatrol);
     }
 
     // Update is called once per frame
@@ -114,6 +118,7 @@ public class NPCController : MonoBehaviour
     public Collider getTarget() => target;
 
     public bool getSeeingSmoke() => seeingSmoke;
+    public bool setSeeingSmoke() => seeingSmoke = false;
 
     public void setCenterpoint(Vector3 point) => centerpoint = point;
 
@@ -159,12 +164,12 @@ public class NPCController : MonoBehaviour
                         if (((1 << hit.collider.gameObject.layer) & smokeMask) != 0)
                             seeingSmoke = true; // Visao bloqueada pela FUMACA
                         else
-                            seeingSmoke = false;
+                            setSeeingSmoke();
                     }
                     else{
                         Debug.DrawLine(origin, targetPos, Color.blue);
                         target = collider;
-                        seeingSmoke = false;
+                        setSeeingSmoke();
                         return true;
                     }
                 }
@@ -197,12 +202,12 @@ public class NPCController : MonoBehaviour
                     if (((1 << hit.collider.gameObject.layer) & smokeMask) != 0)
                         seeingSmoke = true; // Visao bloqueada pela FUMACA
                     else
-                        seeingSmoke = false;
+                        setSeeingSmoke();
                 }
                 else { 
                     Debug.DrawLine(origin, targetPos, Color.blue);
                     target = collider;
-                    seeingSmoke = false;
+                    setSeeingSmoke();
                     return true;
                 }
             }
@@ -235,23 +240,28 @@ public class NPCController : MonoBehaviour
 
     public void checkNoise(Vector3 collisionPoint)
     {
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(collisionPoint, out hit, 2f, agent.areaMask))
+            collisionPoint = hit.position;
+
         Vector3 a = new Vector3(transform.position.x, 0, transform.position.z);
         Vector3 b = new Vector3(collisionPoint.x, 0, collisionPoint.z);
         float d = Vector3.Distance(a, b);
         if (d <= hearingRangeProjectile)
-        {
-            //target = collisionPoint;
-            print("ouviu");
             noiseSource = collisionPoint;
-        }
     }
 
     public Vector3 getNoise() => noiseSource;
 
-    public void noiseChecked()
-    {
-        noiseSource = Vector3.zero;
-    }
+    public void resetNoise() => noiseSource = Vector3.zero;
+
+    public void setCover(bool state) => cover = state;
+
+    public bool getCover() => cover;
+
+    public void setNPCIndex(int i) => index = i;
+
+    public int getNPCIndex() => index;
 
     void OnDrawGizmos()
     {

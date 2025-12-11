@@ -8,6 +8,7 @@ public class NPCPatrol : IState
     NPCController controller;
     NPCStateMachine machine;
     NPCTracker tracker;
+    NPCCover cover;
 
     bool wait;
     float timer;
@@ -26,11 +27,15 @@ public class NPCPatrol : IState
 
         agent = controller.agent;
         waypoints = controller.waypoints;
-
-        ComputeCenter();
     }
 
-    public void Enter() { }
+    public void Enter() {
+        wait = false;
+        timer = 0f;
+
+        waypoints = controller.waypoints;
+        ComputeCenter();
+    }
 
     void IState.Update(){
         
@@ -41,13 +46,12 @@ public class NPCPatrol : IState
         {
             machine.changeState(tracker);
         }
+        if (controller.getCover())
+        {
+            machine.changeState(cover);
+        }
 
         Patrol();
-
-        //if (controller.getTarget() != null)
-        //{
-        //    machine.changeState(checkNoise);
-        //}
     }
 
     public void Exit() {
@@ -75,6 +79,8 @@ public class NPCPatrol : IState
             return;
         }
 
+        agent.updateRotation = true;
+
         if (waypoints.Count == 0) return;
 
         float d = Vector3.Distance(waypoints[index].position, controller.transform.position);
@@ -95,7 +101,8 @@ public class NPCPatrol : IState
         center = sum / waypoints.Count;
     }
 
-    public void SetDependencies(NPCTracker npcTracker) {
+    public void SetDependencies(NPCTracker npcTracker, NPCCover npcCover) {
         this.tracker = npcTracker;
+        this.cover = npcCover;
     }
 }

@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5707996517443066652}
   - component: {fileID: 2789849729049705164}
   - component: {fileID: 391264821292543056}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Projectile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -147,3 +147,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeToFade: 8
+  fadeDuration: 2
