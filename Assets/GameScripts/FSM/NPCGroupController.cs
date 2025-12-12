@@ -84,6 +84,13 @@ public class NPCGroupController : MonoBehaviour
                 npc.GetComponent<NPCController>().checkNoise(collisionPoint);
     }
 
+    public void groupResetNoise()
+    {
+        foreach (var npc in npcs)
+            if (npc != null)
+                npc.GetComponent<NPCController>().resetNoise();
+    }
+
     public int getNumberOfNPCs()
     {
         return transform.childCount;

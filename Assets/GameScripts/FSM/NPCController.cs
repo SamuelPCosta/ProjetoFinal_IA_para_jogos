@@ -45,7 +45,7 @@ public class NPCController : MonoBehaviour
     [Space(10)]
     public float TimeDesoriented = 2.5f;
 
-    private Collider target = null;
+    private Vector3? target = null;
     private bool seeingSmoke = false;
     private bool isDisoriented = false;
 
@@ -74,6 +74,8 @@ public class NPCController : MonoBehaviour
         // DEBUG E ATRIBUICOES
         agent = GetComponent<NavMeshAgent>();
         agent.updateRotation = true;
+        agent.avoidancePriority = Random.Range(20, 70);
+        agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
 
         if (agent == null)
         {
@@ -115,7 +117,7 @@ public class NPCController : MonoBehaviour
         HandleRotation();
     }
 
-    public Collider getTarget() => target;
+    public Vector3? getTarget() => target;
 
     public bool getSeeingSmoke() => seeingSmoke;
     public bool setSeeingSmoke() => seeingSmoke = false;
@@ -127,22 +129,18 @@ public class NPCController : MonoBehaviour
 
     private void HandleRotation()
     {
-        if (lastTargetPosition != Vector3.zero)
-        {
-            Vector3 direction = (lastTargetPosition - transform.position).normalized;
-            direction.y = 0;
+        Vector3? currentTargetNullable = getTarget();
+        if (currentTargetNullable == null) return;
+        Vector3 currentTarget = currentTargetNullable.Value;
 
-            if (direction != Vector3.zero)
-            {
-                Quaternion lookRotation = Quaternion.LookRotation(direction);
+        Vector3 targetPos = currentTarget;
+        Vector3 direction = targetPos - transform.position;
+        direction.y = 0;
 
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    lookRotation,
-                    Time.deltaTime * angularSpeed
-                );
-            }
-        }
+        if (direction.sqrMagnitude < 0.001f) return;
+
+        Vector3 newDir = Vector3.RotateTowards(transform.forward, direction, angularSpeed * Mathf.Deg2Rad * Time.deltaTime, 0f);
+        transform.rotation = Quaternion.LookRotation(newDir);
     }
 
     #region detectPlayer
@@ -168,10 +166,14 @@ public class NPCController : MonoBehaviour
                     }
                     else{
                         Debug.DrawLine(origin, targetPos, Color.blue);
-                        target = collider;
+                        target = collider.bounds.center;
                         setSeeingSmoke();
                         return true;
                     }
+                }
+                else
+                {
+                    print("caiu aqui");
                 }
             }
         }
@@ -206,7 +208,7 @@ public class NPCController : MonoBehaviour
                 }
                 else { 
                     Debug.DrawLine(origin, targetPos, Color.blue);
-                    target = collider;
+                    target = collider.bounds.center;
                     setSeeingSmoke();
                     return true;
                 }
@@ -215,27 +217,41 @@ public class NPCController : MonoBehaviour
         return false;
     }
 
+    private Vector3 lastKnownTargetPosition = Vector3.zero;
     private bool DetectPlayerBySound()
     {
-        Vector3 centerPosition = transform.position;
-        Collider[] detectedColliders = Physics.OverlapSphere(centerPosition, hearingRange);
+        Collider[] hits = Physics.OverlapSphere(transform.position, hearingRange);
+        bool detected = false;
 
-        foreach (Collider detectedCollider in detectedColliders)
+        foreach (Collider hit in hits)
         {
-            if (detectedCollider.CompareTag("Player"))
+            if (!hit.CompareTag("Player")) continue;
+
+            Vector3 playerPos = hit.bounds.center;
+            Vector3 dir = (playerPos - transform.position).normalized;
+            NavMeshHit navHit;
+
+            // Atualiza ultimo ponto
+            if (NavMesh.SamplePosition(playerPos, out navHit, 2f, agent.areaMask))
+                lastKnownTargetPosition = navHit.position;
+
+            StarterAssets.StarterAssetsInputs playerInputs = hit.GetComponent<StarterAssets.StarterAssetsInputs>();
+            if (playerInputs != null && (!playerInputs.crouch && playerInputs.move != Vector2.zero))
             {
-                StarterAssets.StarterAssetsInputs playerInputs = detectedCollider.GetComponent<StarterAssets.StarterAssetsInputs>();
-                if (playerInputs != null &&
-                   !playerInputs.crouch && playerInputs.move != Vector2.zero)
-                {
-                    target = detectedCollider;
-                    return true;
-                }
+                target = lastKnownTargetPosition;
+                detected = true;
             }
         }
 
-        return false;
+        if (!detected && lastKnownTargetPosition != Vector3.zero)
+        {
+            Vector3 dir = (lastKnownTargetPosition - transform.position).normalized;
+            target = transform.position + dir * hearingRange; // ponto na borda do range
+        }
+
+        return detected;
     }
+
     #endregion
 
     public void checkNoise(Vector3 collisionPoint)
@@ -253,6 +269,9 @@ public class NPCController : MonoBehaviour
 
     public Vector3 getNoise() => noiseSource;
 
+    public void noiseChecked(){
+        transform.parent.GetComponent<NPCGroupController>().groupResetNoise();
+    }
     public void resetNoise() => noiseSource = Vector3.zero;
 
     public void setCover(bool state) => cover = state;
@@ -375,8 +394,6 @@ public class NPCController : MonoBehaviour
         {
             int nextIndex = i + 1 > segments ? 1 : i + 1;
             Vector3 currentPoint = origin + vertices[nextIndex];
-            Gizmos.DrawLine(lastPoint, currentPoint);
-            Gizmos.DrawLine(origin, origin + vertices[i]);
             lastPoint = currentPoint;
         }
     }

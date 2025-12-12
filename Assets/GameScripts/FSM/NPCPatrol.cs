@@ -30,7 +30,7 @@ public class NPCPatrol : IState
     }
 
     public void Enter() {
-        //wait = false;
+        wait = false;
         timer = 0f;
 
         waypoints = controller.waypoints;

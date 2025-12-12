@@ -30,14 +30,32 @@ public class NPCTracker : IState
 
     void IState.Update(){
         if (checkingNoise){
-            if (!controller.agent.pathPending && controller.agent.remainingDistance <= controller.agent.stoppingDistance){
+            if (controller.agent.hasPath && controller.agent.remainingDistance <= controller.agent.stoppingDistance){
                 checkingNoise = false;
                 controller.resetNoise();
             }
         }
 
-        if (controller.getTarget() == null && controller.getNoise() == Vector3.zero)
+        Vector3 dir = controller.agent.destination - controller.transform.position;
+        dir.y = 0; // ignora altura
+        float angleToTarget = Vector3.Angle(controller.transform.forward, dir);
+
+        if (controller.getTarget() == null &&
+            controller.getNoise() == Vector3.zero &&
+            !controller.agent.pathPending &&
+            controller.agent.remainingDistance <= controller.agent.stoppingDistance &&
+            angleToTarget <= 5f) // tolerância de 5 graus
+        {
             machine.changeState(patrol);
+            return;
+        }
+
+        if (controller.agent.remainingDistance <= controller.agent.stoppingDistance &&
+            controller.agent.velocity.magnitude < 0.05f)
+        {
+            machine.changeState(patrol);
+            return;
+        }
 
         if (controller.getSeeingSmoke()) { 
             machine.changeState(disoriented);
@@ -45,15 +63,19 @@ public class NPCTracker : IState
         }
 
         if (controller.getTarget() != null) { 
-            controller.agent.SetDestination(controller.getTarget().bounds.center);
+            controller.agent.SetDestination(controller.getTarget().Value);
             return;
         }
 
         Vector3 noise = controller.getNoise();
         if (noise != Vector3.zero){
-            controller.resetNoise();
+            //controller.resetNoise();
             checkingNoise = true;
             controller.agent.SetDestination(noise);
+        }
+        else
+        {
+            checkingNoise = false;
         }
     }
 

@@ -1091,7 +1091,7 @@ NavMeshAgent:
   m_Speed: 3.5
   m_Acceleration: 8
   avoidancePriority: 50
-  m_AngularSpeed: 900
+  m_AngularSpeed: 1200
   m_StoppingDistance: 1.01
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
@@ -1117,8 +1117,8 @@ MonoBehaviour:
   eyeHeight: 1.5
   segments: 6
   secondaryRange: 10
-  secondaryAngle: 40
-  secondaryPitch: -45
+  secondaryAngle: 100
+  secondaryPitch: -30
   hearingRange: 2.75
   hearingRangeProjectile: 8
   angularSpeed: 300
@@ -1136,6 +1136,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  coverWaypoints: []
   TimeDesoriented: 3
 --- !u!136 &8642321260324386739
 CapsuleCollider:
