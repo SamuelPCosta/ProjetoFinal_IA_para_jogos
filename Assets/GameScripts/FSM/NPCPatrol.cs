@@ -38,18 +38,11 @@ public class NPCPatrol : IState
     }
 
     void IState.Update(){
-        
-        if (controller.getTarget() != null){
-            machine.changeState(tracker);
-        }
-        if (controller.getNoise() != Vector3.zero)
-        {
-            machine.changeState(tracker);
-        }
-        if (controller.getCover())
-        {
-            machine.changeState(cover);
-        }
+
+        if (controller.getTarget() != null) machine.changeState(tracker);
+        if (controller.getNoise() != Vector3.zero) machine.changeState(tracker);
+        //if (controller.seeingDoor()) machine.changeState(UnlockDoor);
+        if (controller.getCover()) machine.changeState(cover);
 
         Patrol();
     }

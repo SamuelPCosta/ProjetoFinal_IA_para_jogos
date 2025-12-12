@@ -42,25 +42,24 @@ public class NPCTracker : IState
         float angleToTarget = Vector3.Angle(controller.transform.forward, dir);
 
         if (controller.getTarget() == null &&
-            controller.getNoise() == Vector3.zero &&
-            !controller.agent.pathPending &&
-            controller.agent.remainingDistance <= controller.agent.stoppingDistance &&
-            angleToTarget <= 5f) // tolerância de 5 graus
+        controller.getNoise() == Vector3.zero &&
+        !controller.agent.pathPending &&
+        controller.agent.remainingDistance <= controller.agent.stoppingDistance)
         {
             machine.changeState(patrol);
             return;
         }
 
-        if (controller.agent.remainingDistance <= controller.agent.stoppingDistance &&
-            controller.agent.velocity.magnitude < 0.05f)
-        {
-            machine.changeState(patrol);
-            return;
-        }
+        //if (controller.agent.remainingDistance <= controller.agent.stoppingDistance &&
+        //    controller.agent.velocity.magnitude < 0.05f)
+        //{
+        //    machine.changeState(patrol);
+        //    return;
+        //}
 
         if (controller.getSeeingSmoke()) { 
             machine.changeState(disoriented);
-            controller.setSeeingSmoke();
+            controller.resetSeeingSmoke();
         }
 
         if (controller.getTarget() != null) { 

@@ -46,11 +46,11 @@ public class NPCController : MonoBehaviour
     public float TimeDesoriented = 2.5f;
 
     private Vector3? target = null;
+    private Vector3? targetDoor = null;
     private bool seeingSmoke = false;
     private bool isDisoriented = false;
 
     private Mesh viewMesh;
-    private Mesh secondaryMesh;
     private Vector3 lastTargetPosition;
 
     private Vector3 centerpoint = Vector3.zero;
@@ -106,10 +106,13 @@ public class NPCController : MonoBehaviour
             npcStateMachine.Update();
 
         if (!isDisoriented) {
-            if (DetectPlayerByVision()  || DetectPlayerBySound()) //|| DetectPlayerByVisionAbove()
+            if (DetectPlayerByVision() || DetectPlayerBySound()) //|| DetectPlayerByVisionAbove()
                 Debug.Log("JOGADOR DETECTADO!");
-            else
+            else { 
                 target = null;
+                //checar portas trancadas
+                //DetectLockedDoor();
+            }
         }
         else
             target = null;
@@ -120,12 +123,11 @@ public class NPCController : MonoBehaviour
     public Vector3? getTarget() => target;
 
     public bool getSeeingSmoke() => seeingSmoke;
-    public bool setSeeingSmoke() => seeingSmoke = false;
+    public bool resetSeeingSmoke() => seeingSmoke = false;
 
     public void setCenterpoint(Vector3 point) => centerpoint = point;
 
     public void setDisoriented(bool state) => isDisoriented = state;
-
 
     private void HandleRotation()
     {
@@ -144,37 +146,39 @@ public class NPCController : MonoBehaviour
     }
 
     #region detectPlayer
-    private bool DetectPlayerByVision()
-    {
+    private bool DetectPlayerByVision(){
         Vector3 origin = transform.position + Vector3.up * eyeHeight;
         Collider[] hits = Physics.OverlapSphere(origin, range);
-
         RaycastHit hit;
-
         Vector3 lookDirection = transform.forward;
 
-        foreach (Collider collider in hits)
-        {
-            if (collider.CompareTag("Player"))
-            {
+        float minDetectionDistance = 1f;
+
+        foreach (Collider collider in hits){
+            if (collider.CompareTag("Player")){
                 Vector3 targetPos = collider.bounds.center;
                 Vector3 dir = (targetPos - origin).normalized;
                 float dist = Vector3.Distance(origin, targetPos);
 
-                if (Vector3.Dot(lookDirection, dir) >= Mathf.Cos(angle * 0.5f * Mathf.Deg2Rad))
-                {
-                    if (Physics.Raycast(origin, dir, out hit, dist, obstacleMask, QueryTriggerInteraction.Collide))
-                    {
+                // 1. CHECAGEM DE PROXIMIDADE EXTREMA (Ignora o cone se estiver muito perto)
+                if (dist <= minDetectionDistance){
+                    target = targetPos;
+                    resetSeeingSmoke();
+                    return true;
+                }
+
+                // 2. CHECAGEM ANGULAR (Cone de Visao 3D)
+                if (Vector3.Dot(lookDirection, dir) >= Mathf.Cos(angle * 0.5f * Mathf.Deg2Rad)){
+                    if (Physics.Raycast(origin, dir, out hit, dist, obstacleMask, QueryTriggerInteraction.Collide)){
                         if (((1 << hit.collider.gameObject.layer) & smokeMask) != 0)
                             seeingSmoke = true;
                         else
-                            setSeeingSmoke();
+                            resetSeeingSmoke();
                     }
-                    else
-                    {
+                    else{
                         Debug.DrawLine(origin, targetPos, Color.blue);
                         target = targetPos;
-                        setSeeingSmoke();
+                        resetSeeingSmoke();
                         return true;
                     }
                 }
@@ -184,13 +188,15 @@ public class NPCController : MonoBehaviour
     }
 
     private Vector3 lastKnownTargetPosition = Vector3.zero;
-    private bool DetectPlayerBySound()
-    {
+    private Vector3 lastKnownPlayerDirection;
+    private bool DetectPlayerBySound(){
         Collider[] hits = Physics.OverlapSphere(transform.position, hearingRange);
         bool detected = false;
 
-        foreach (Collider hit in hits)
-        {
+        Vector3 currentPlayerDirection = Vector3.zero;
+        Vector3 lastKnownTargetPosition = Vector3.zero;
+
+        foreach (Collider hit in hits){
             if (!hit.CompareTag("Player")) continue;
 
             Vector3 playerPos = hit.bounds.center;
@@ -202,10 +208,17 @@ public class NPCController : MonoBehaviour
                 lastKnownTargetPosition = navHit.position;
 
             StarterAssets.StarterAssetsInputs playerInputs = hit.GetComponent<StarterAssets.StarterAssetsInputs>();
-            if (playerInputs != null && (!playerInputs.crouch && playerInputs.move != Vector2.zero))
-            {
-                target = lastKnownTargetPosition;
-                detected = true;
+            Transform playerTransform = hit.transform;
+            currentPlayerDirection = playerTransform.forward;
+            if (playerInputs != null) {
+                bool isLoud = !playerInputs.crouch && playerInputs.move != Vector2.zero;
+                if (isLoud) {
+                    print("here");
+                    target = lastKnownTargetPosition;
+                    Debug.DrawLine(transform.position, target.Value, Color.blue);
+                    detected = true;
+                    lastKnownPlayerDirection = currentPlayerDirection;
+                }
             }
         }
 
@@ -213,9 +226,34 @@ public class NPCController : MonoBehaviour
         {
             Vector3 dir = (lastKnownTargetPosition - transform.position).normalized;
             target = transform.position + dir * hearingRange; // ponto na borda do range
+            detected = true;
         }
 
         return detected;
+    }
+
+    private bool DetectLockedDoor(){
+        Vector3 origin = transform.position + Vector3.up * eyeHeight;
+        Collider[] hits = Physics.OverlapSphere(origin, range);
+        //RaycastHit hit;
+        Vector3 lookDirection = transform.forward;
+
+        foreach (Collider collider in hits){
+            if (collider.CompareTag("LokedDoor")){
+                Vector3 targetPos = collider.bounds.center;
+                Vector3 dir = (targetPos - origin).normalized;
+                float dist = Vector3.Distance(origin, targetPos);
+
+                if (Vector3.Dot(lookDirection, dir) >= Mathf.Cos(angle * 0.5f * Mathf.Deg2Rad)){
+                    
+                    Debug.DrawLine(origin, targetPos, Color.gray);
+                    targetDoor = targetPos;
+                    return true;
+                    
+                }
+            }
+        }
+        return false;
     }
 
     #endregion
@@ -235,9 +273,6 @@ public class NPCController : MonoBehaviour
 
     public Vector3 getNoise() => noiseSource;
 
-    public void noiseChecked(){
-        transform.parent.GetComponent<NPCGroupController>().groupResetNoise();
-    }
     public void resetNoise() => noiseSource = Vector3.zero;
 
     public void setCover(bool state) => cover = state;
