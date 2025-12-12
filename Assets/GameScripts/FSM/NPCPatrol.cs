@@ -26,7 +26,7 @@ public class NPCPatrol : IState
         this.machine = machine;
 
         agent = controller.agent;
-        waypoints = controller.waypoints;
+        //waypoints = controller.waypoints;
     }
 
     public void Enter() {

@@ -79,8 +79,10 @@ public class NPCController : MonoBehaviour
         {
             Debug.LogError("Componente NavMeshAgent ausente no NPC!");
         }
+    }
 
-        //INICIALIZACAO DOS ESTADOS
+    public void InitStates()
+    {
         npcStateMachine = new NPCStateMachine();
         npcPatrol = new NPCPatrol(this, npcStateMachine);
         npcTracker = new NPCTracker(this, npcStateMachine);
@@ -98,10 +100,8 @@ public class NPCController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        npcStateMachine.Update();
-
-        //CHECK PLAYER
-        //DrawFieldOfViewBorders(false, Color.red);
+        if (npcStateMachine != null)
+            npcStateMachine.Update();
 
         if (!isDisoriented) {
             if (DetectPlayerByVision() || DetectPlayerByVisionAbove() || DetectPlayerBySound())

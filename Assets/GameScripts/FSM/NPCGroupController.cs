@@ -12,22 +12,28 @@ public class NPCGroupController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        setRoutes();
+        StartCoroutine(InitChildrenStates());
+    }
+
+    public void setRoutes()
+    {
         npcs = new List<GameObject>();
 
         int i = 0;
-        foreach (Transform npc in transform){
+        foreach (Transform npc in transform)
+        {
             npcs.Add(npc.gameObject);
             NPCController npcController = npc.GetComponent<NPCController>();
 
-            if (i < routes.transform.childCount){
+            if (i < routes.transform.childCount)
+            {
                 var route = routes.transform.GetChild(i).GetComponentsInChildren<Transform>();
                 var list = new List<Transform>();
                 for (int w = 1; w < route.Length; w++) //waypoint - index 1 skipa o pai da rota
                     list.Add(route[w]);
                 npcController.waypoints = list;
             }
-
-            npcController.setNPCIndex(i);
             i++;
 
             var newRoute = routeCover.transform.GetComponentsInChildren<Transform>();
@@ -38,16 +44,36 @@ public class NPCGroupController : MonoBehaviour
         }
     }
 
+    IEnumerator InitChildrenStates()
+    {
+        yield return null;
+        foreach (Transform npc in transform)
+        {
+            NPCController controller = npc.GetComponent<NPCController>();
+            controller.InitStates();
+        }
+    }
+
     // Update is called once per frame
     const int numberOfCover = 2; 
     void Update(){
-        if(getNumberOfNPCs() == numberOfCover)
+        setIndexDynamically();
+        if (getNumberOfNPCs() <= numberOfCover)
         {
             foreach (Transform npc in transform)
                 npc.GetComponent<NPCController>().setCover(true);
         }else
             foreach (Transform npc in transform)
                 npc.GetComponent<NPCController>().setCover(false);
+    }
+
+    private void setIndexDynamically(){
+        int i = 0;
+        foreach (Transform npc in transform){
+            NPCController npcController = npc.GetComponent<NPCController>();
+            npcController.setNPCIndex(i);
+            i++;
+        }
     }
 
     public void groupCheckNoise(Vector3 collisionPoint)
