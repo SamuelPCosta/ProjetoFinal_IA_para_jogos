@@ -19,4 +19,13 @@ public class DoorController : MonoBehaviour
         }
     }
 
+    public Vector3 getFirstPoint()
+    {
+        return Door.transform.GetChild(0).position;
+    }
+
+    public Vector3 getSecondPoint()
+    {
+        return Door.transform.GetChild(1).position;
+    }
 }

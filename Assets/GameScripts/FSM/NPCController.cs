@@ -74,8 +74,8 @@ public class NPCController : MonoBehaviour
         // DEBUG E ATRIBUICOES
         agent = GetComponent<NavMeshAgent>();
         agent.updateRotation = true;
-        agent.avoidancePriority = Random.Range(20, 70);
-        agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
+        agent.avoidancePriority = Random.Range(20, 50);
+        //agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
 
         if (agent == null)
         {
@@ -106,7 +106,7 @@ public class NPCController : MonoBehaviour
             npcStateMachine.Update();
 
         if (!isDisoriented) {
-            if (DetectPlayerByVision() || DetectPlayerByVisionAbove() || DetectPlayerBySound())
+            if (DetectPlayerByVision()  || DetectPlayerBySound()) //|| DetectPlayerByVisionAbove()
                 Debug.Log("JOGADOR DETECTADO!");
             else
                 target = null;
@@ -151,66 +151,32 @@ public class NPCController : MonoBehaviour
 
         RaycastHit hit;
 
-        foreach (Collider collider in hits){
-            if (collider.CompareTag("Player")){
+        Vector3 lookDirection = transform.forward;
+
+        foreach (Collider collider in hits)
+        {
+            if (collider.CompareTag("Player"))
+            {
                 Vector3 targetPos = collider.bounds.center;
                 Vector3 dir = (targetPos - origin).normalized;
                 float dist = Vector3.Distance(origin, targetPos);
 
-                if (Vector3.Dot(transform.forward, dir) >= Mathf.Cos(angle * 0.5f * Mathf.Deg2Rad)){
-                    if (Physics.Raycast(origin, dir, out hit, dist, obstacleMask, QueryTriggerInteraction.Collide)){
+                if (Vector3.Dot(lookDirection, dir) >= Mathf.Cos(angle * 0.5f * Mathf.Deg2Rad))
+                {
+                    if (Physics.Raycast(origin, dir, out hit, dist, obstacleMask, QueryTriggerInteraction.Collide))
+                    {
                         if (((1 << hit.collider.gameObject.layer) & smokeMask) != 0)
-                            seeingSmoke = true; // Visao bloqueada pela FUMACA
+                            seeingSmoke = true;
                         else
                             setSeeingSmoke();
                     }
-                    else{
+                    else
+                    {
                         Debug.DrawLine(origin, targetPos, Color.blue);
-                        target = collider.bounds.center;
+                        target = targetPos;
                         setSeeingSmoke();
                         return true;
                     }
-                }
-                else
-                {
-                    print("caiu aqui");
-                }
-            }
-        }
-        return false;
-    }
-
-    private bool DetectPlayerByVisionAbove()
-    {
-        Vector3 origin = transform.position + Vector3.up * eyeHeight;
-        Collider[] hits = Physics.OverlapSphere(origin, secondaryRange);
-
-        Vector3 secondaryForward = (transform.rotation * Quaternion.Euler(-secondaryPitch, 0f, 0f)) * Vector3.forward;
-        RaycastHit hit;
-
-        foreach (Collider collider in hits)
-        {
-            if (!collider.CompareTag("Player")) continue;
-
-            Vector3 targetPos = collider.bounds.center;
-            Vector3 dir = (targetPos - origin).normalized;
-            float dist = Vector3.Distance(origin, targetPos);
-
-            float angleToPlayer = Vector3.Angle(secondaryForward, dir);
-            if (angleToPlayer <= secondaryAngle * 0.5f)
-            {
-                if (Physics.Raycast(origin, dir, out hit, dist, obstacleMask, QueryTriggerInteraction.Collide))
-                {
-                    if (((1 << hit.collider.gameObject.layer) & smokeMask) != 0)
-                        seeingSmoke = true; // Visao bloqueada pela FUMACA
-                    else
-                        setSeeingSmoke();
-                }
-                else { 
-                    Debug.DrawLine(origin, targetPos, Color.blue);
-                    target = collider.bounds.center;
-                    setSeeingSmoke();
-                    return true;
                 }
             }
         }
@@ -288,12 +254,13 @@ public class NPCController : MonoBehaviour
         DrawFieldOfViewBorders(true, Color.red);
         DrawHearingZone(Color.blue);
         DrawHearingZoneProjectile(Color.blue);
-        DrawSecondaryCone(Color.red);
+        //DrawSecondaryCone(Color.red);
         if (centerpoint != Vector3.zero)
             DrawCenterPatrol();
     }
 
     #region drawDebug
+
     private void DrawFieldOfViewFilled(Color color)
     {
         if (viewMesh == null)
@@ -353,51 +320,6 @@ public class NPCController : MonoBehaviour
             }
         }
     }
-
-    private void DrawSecondaryCone(Color color)
-    {
-        if (secondaryMesh == null) secondaryMesh = new Mesh();
-
-        Vector3 origin = transform.position + Vector3.up * eyeHeight;
-        Quaternion pitchRotation = transform.rotation * Quaternion.Euler(-secondaryPitch, 0f, 0f);
-
-        Vector3[] vertices = new Vector3[segments + 2];
-        int[] triangles = new int[segments * 3];
-
-        vertices[0] = Vector3.zero;
-
-        for (int i = 0; i <= segments; i++)
-        {
-            float segmentAngle = -secondaryAngle * 0.5f + (secondaryAngle / segments) * i;
-            Vector3 point = Quaternion.Euler(0f, segmentAngle, 0f) * Vector3.forward * secondaryRange;
-            vertices[i + 1] = pitchRotation * point;
-        }
-
-        for (int i = 0; i < segments; i++)
-        {
-            triangles[i * 3] = 0;
-            triangles[i * 3 + 1] = i + 1;
-            triangles[i * 3 + 2] = i + 2;
-        }
-
-        secondaryMesh.Clear();
-        secondaryMesh.vertices = vertices;
-        secondaryMesh.triangles = triangles;
-        secondaryMesh.RecalculateNormals();
-
-        Gizmos.color = color * 0.5f;
-        Gizmos.DrawMesh(secondaryMesh, origin, Quaternion.identity);
-
-        Gizmos.color = color;
-        Vector3 lastPoint = origin + vertices[1];
-        for (int i = 1; i <= segments; i++)
-        {
-            int nextIndex = i + 1 > segments ? 1 : i + 1;
-            Vector3 currentPoint = origin + vertices[nextIndex];
-            lastPoint = currentPoint;
-        }
-    }
-
     private void DrawHearingZone(Color color)
     {
         Gizmos.color = color;

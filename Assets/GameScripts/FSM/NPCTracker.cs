@@ -19,6 +19,7 @@ public class NPCTracker : IState
     }
 
     public void Enter() {
+        checkingNoise = false;
         if (controller.agent != null)
         {
             controller.agent.isStopped = false;
@@ -81,7 +82,7 @@ public class NPCTracker : IState
 
     public void Exit() {
         checkingNoise = false;
-        controller.resetNoise();
+        //controller.resetNoise();
     }
 
     public void SetDependencies(NPCPatrol patrol, NPCDisoriented disoriented)

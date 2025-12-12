@@ -43,6 +43,12 @@ public class PlayerController : MonoBehaviour
 
     public LayerMask projetileLayer;
 
+    //###########CAM FOV
+    private StarterAssets.ThirdPersonController ctrl;
+    private StarterAssets.StarterAssetsInputs inputs;
+    private float baseFov;
+    private float dashTime;
+
 #if ENABLE_INPUT_SYSTEM
     private PlayerInput _playerInput;
 #endif
@@ -70,6 +76,14 @@ private StarterAssets.StarterAssetsInputs _input;
 #else
 			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
+    }
+
+    void Awake()
+    {
+        ctrl = GetComponent <StarterAssets.ThirdPersonController>();
+        baseFov = FindObjectOfType<Cinemachine.CinemachineBrain>().GetComponent<Camera>().fieldOfView;
+        inputs = GetComponent<StarterAssets.StarterAssetsInputs>();
+        dashTime = ctrl.dashTime;
     }
 
     // Update is called once per frame
@@ -110,6 +124,8 @@ private StarterAssets.StarterAssetsInputs _input;
         {
             LaunchProjectile();
         }
+
+        if (inputs.dash) StartCoroutine(DashRoutine());
     }
 
     private GameObject CheckRangeDoor()
@@ -219,5 +235,27 @@ private StarterAssets.StarterAssetsInputs _input;
             }
             last = cur;
         }
+    }
+
+    float newFov = 200f; 
+    System.Collections.IEnumerator DashRoutine()
+    {
+        //running = true;
+        yield return StartCoroutine(FovLerp(baseFov, newFov, 0.2f));
+        yield return new WaitForSeconds(dashTime);
+        yield return StartCoroutine(FovLerp(newFov, baseFov, 0.3f));
+        //running = false;
+    }
+
+    System.Collections.IEnumerator FovLerp(float a, float b, float t)
+    {
+        float e = 0f;
+        while (e < t)
+        {
+            e += Time.deltaTime;
+            cam.OutputCamera.fieldOfView = Mathf.Lerp(a, b, e / t);
+            yield return null;
+        }
+        cam.OutputCamera.fieldOfView = b;
     }
 }
