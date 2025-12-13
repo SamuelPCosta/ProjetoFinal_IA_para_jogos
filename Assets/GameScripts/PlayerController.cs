@@ -16,10 +16,14 @@ public class PlayerController : MonoBehaviour
 
     //##################### AQUI
     [Header("Status")]
-    public int energy = 10;
-    public int smokeEnergy = 4;
-    public int dashEnergy = 6;
-    public int projectileEnergy = 1;
+    [SerializeField] private int pointsOfLife = 5;
+    [SerializeField] private int maxEnergy = 10;
+                     private int currentEnergy;
+    [SerializeField] private int smokeEnergy = 4;
+    [SerializeField] private int dashEnergy = 6;
+    [SerializeField] private int projectileEnergy = 1;
+    [SerializeField] private float timeToRestoreEnergy = 4f;
+                     private float timer = 0f;
 
     [Space(10)]
     [Header("PlayerConfig")]
@@ -76,6 +80,10 @@ private StarterAssets.StarterAssetsInputs _input;
 #else
 			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
+
+
+        //###############################################
+        currentEnergy = maxEnergy;
     }
 
     void Awake()
@@ -89,6 +97,7 @@ private StarterAssets.StarterAssetsInputs _input;
     // Update is called once per frame
     void Update()
     {
+        //TRANCAR PORTA
         if (_input.action){
             GameObject door = CheckRangeDoor();
             if(door != null){
@@ -99,6 +108,7 @@ private StarterAssets.StarterAssetsInputs _input;
             }
         }
 
+        //SMOKE
         if (_input.smoke){
             _input.action = false;
             Instantiate(smokeGranade, dropObjectPoint.position, dropObjectPoint.rotation);
@@ -106,6 +116,7 @@ private StarterAssets.StarterAssetsInputs _input;
             _input.smoke = false;
         }
 
+        //ARREMESSO
         Vector3 euler = spawnPoint.rotation.eulerAngles;
         euler.x = cam.transform.rotation.eulerAngles.x;
 
@@ -126,6 +137,16 @@ private StarterAssets.StarterAssetsInputs _input;
         }
 
         if (inputs.dash) StartCoroutine(DashRoutine());
+
+        //ENERGIA
+        if(currentEnergy < maxEnergy){
+            timer += Time.deltaTime;
+            if (timer >= timeToRestoreEnergy){
+                currentEnergy += 1;
+                timer = 0f;
+            }
+        }
+        
     }
 
     private GameObject CheckRangeDoor()
@@ -236,6 +257,9 @@ private StarterAssets.StarterAssetsInputs _input;
             last = cur;
         }
     }
+
+    public int getLife() => pointsOfLife;
+
 
     float newFov = 200f; 
     System.Collections.IEnumerator DashRoutine()

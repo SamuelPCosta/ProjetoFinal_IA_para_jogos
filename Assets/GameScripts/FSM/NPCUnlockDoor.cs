@@ -11,11 +11,6 @@ public class NPCUnlockDoor : IState
     NPCCover cover;
     NPCPatrol patrol;
     NPCGroupController groupController;
-
-    bool wait;
-    float timer;
-    float minDistanceToPoint = 2f;
-
     NavMeshAgent agent;
     int index;
 
@@ -29,10 +24,7 @@ public class NPCUnlockDoor : IState
         agent = controller.agent;
     }
 
-    public void Enter() {
-        wait = false;
-        timer = 0f;
-    }
+    public void Enter() { }
 
     void IState.Update(){
         if (controller.getTarget() != null) machine.changeState(tracker);

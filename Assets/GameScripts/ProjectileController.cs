@@ -43,6 +43,7 @@ public class ProjectileController : MonoBehaviour
         {
             Vector3 collisionPoint = collision.contacts[0].point;
             npcGroup.groupCheckNoise(collisionPoint);
+            GetComponent<AudioSource>().Play();
         }
 
         Debug.Log("Colidiu com " + collision.gameObject.name);
