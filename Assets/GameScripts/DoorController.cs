@@ -7,12 +7,13 @@ public class DoorController : MonoBehaviour
     public GameObject Door;
 
     public void LockDoor(){
-        if (!Door.activeSelf)
-            Door.SetActive(true);
+        if(Door!=null)
+            if (!Door.activeSelf)
+                Door.SetActive(true);
     }
 
     public void UnlockDoor(){
-        if (Door.activeSelf) { 
+        if (Door != null && Door.activeSelf) { 
             Door.SetActive(false);
             //TODO
             Destroy(Door);

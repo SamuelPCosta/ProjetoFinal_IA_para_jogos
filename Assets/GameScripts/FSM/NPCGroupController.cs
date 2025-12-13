@@ -9,6 +9,12 @@ public class NPCGroupController : MonoBehaviour
 
     private List<GameObject> npcs;
 
+    private NPCController doorNPC1 = null;
+    private NPCController doorNPC2 = null;
+
+    private Vector3 doorPosition2 = Vector3.zero;
+    private DoorController door = null;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -58,13 +64,17 @@ public class NPCGroupController : MonoBehaviour
     const int numberOfCover = 2; 
     void Update(){
         setIndexDynamically();
-        if (getNumberOfNPCs() <= numberOfCover)
-        {
+        if (getNumberOfNPCs() <= numberOfCover){
             foreach (Transform npc in transform)
                 npc.GetComponent<NPCController>().setCover(true);
         }else
             foreach (Transform npc in transform)
                 npc.GetComponent<NPCController>().setCover(false);
+
+
+        if(doorNPC1 != null && doorNPC2 != null){
+            checkDoor();
+        }
     }
 
     private void setIndexDynamically(){
@@ -87,5 +97,36 @@ public class NPCGroupController : MonoBehaviour
     public int getNumberOfNPCs()
     {
         return transform.childCount;
+    }
+
+    //public bool isDoorLocked() => doorLocked;
+
+    public void setDoorNPC1(NPCController npc) => doorNPC1 = npc;
+    public void setDoorNPC2(NPCController npc) => doorNPC2 = npc;
+
+    public NPCController getDoorNPC1() => doorNPC1;
+    public NPCController getDoorNPC2() => doorNPC2;
+
+    public void setDoorPosition(Vector3 target) => doorPosition2 = target;
+    public Vector3 getDoorPosition2() => doorPosition2;
+    public void setDoor(DoorController door) => this.door = door;
+    public DoorController getDoor() => door;
+
+    private void checkDoor(){
+        if(door != null){
+            if ((!doorNPC1.agent.pathPending && doorNPC1.agent.remainingDistance <= doorNPC1.agent.stoppingDistance) &&
+                (!doorNPC2.agent.pathPending && doorNPC2.agent.remainingDistance <= doorNPC2.agent.stoppingDistance)){
+                // Chegaram ao destino
+                Invoke(nameof(UnlockDoorDelayed), 1f);
+            }
+        }
+    }
+
+    private void UnlockDoorDelayed(){
+        if (door != null){
+            getDoor().UnlockDoor();
+            setDoorNPC1(null);
+            setDoorNPC2(null);
+        }
     }
 }

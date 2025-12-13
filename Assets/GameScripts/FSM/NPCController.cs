@@ -67,6 +67,7 @@ public class NPCController : MonoBehaviour
     NPCTracker npcTracker;
     NPCDisoriented npcDisoriented;
     NPCCover npcCover;
+    NPCUnlockDoor npcUnlockDoor;
 
     // Start is called before the first frame update
     void Start()
@@ -90,11 +91,13 @@ public class NPCController : MonoBehaviour
         npcTracker = new NPCTracker(this, npcStateMachine);
         npcDisoriented = new NPCDisoriented(this, npcStateMachine);
         npcCover = new NPCCover(this, npcStateMachine);
+        npcUnlockDoor = new NPCUnlockDoor(this, npcStateMachine);
 
-        npcPatrol.SetDependencies(npcTracker, npcCover);
+        npcPatrol.SetDependencies(npcTracker, npcCover, npcUnlockDoor, transform.parent.GetComponent<NPCGroupController>());
         npcTracker.SetDependencies(npcPatrol, npcDisoriented);
         npcDisoriented.SetDependencies(npcPatrol);
         npcCover.SetDependencies(npcPatrol, npcTracker);
+        npcUnlockDoor.SetDependencies(npcPatrol, npcTracker, transform.parent.GetComponent<NPCGroupController>());
 
         npcStateMachine.changeState(npcPatrol);
     }
@@ -109,9 +112,16 @@ public class NPCController : MonoBehaviour
             if (DetectPlayerByVision() || DetectPlayerBySound()) //|| DetectPlayerByVisionAbove()
                 Debug.Log("JOGADOR DETECTADO!");
             else { 
-                target = null;
                 //checar portas trancadas
-                //DetectLockedDoor();
+                target = null;
+                if (DetectLockedDoor()){
+                    NPCGroupController groupController = transform.parent.GetComponent<NPCGroupController>();
+                    if (groupController.getDoorNPC1() == null)
+                        groupController.setDoorNPC1(this);
+                    else
+                    if (groupController.getDoorNPC2() == null)
+                        groupController.setDoorNPC2(this);
+                }
             }
         }
         else
@@ -121,7 +131,7 @@ public class NPCController : MonoBehaviour
     }
 
     public Vector3? getTarget() => target;
-
+    public Vector3? getTargetDoor() => targetDoor;
     public bool getSeeingSmoke() => seeingSmoke;
     public bool resetSeeingSmoke() => seeingSmoke = false;
 
@@ -187,7 +197,6 @@ public class NPCController : MonoBehaviour
         return false;
     }
 
-    private Vector3 lastKnownTargetPosition = Vector3.zero;
     private Vector3 lastKnownPlayerDirection;
     private bool DetectPlayerBySound(){
         Collider[] hits = Physics.OverlapSphere(transform.position, hearingRange);
@@ -240,19 +249,33 @@ public class NPCController : MonoBehaviour
 
         foreach (Collider collider in hits){
             if (collider.CompareTag("LokedDoor")){
-                Vector3 targetPos = collider.bounds.center;
-                Vector3 dir = (targetPos - origin).normalized;
-                float dist = Vector3.Distance(origin, targetPos);
+                DoorController door = collider.transform.parent.GetComponent<DoorController>();
+                Vector3 targetPos = door.getFirstPoint();
+                Vector3 target2Pos = door.getSecondPoint();
 
-                if (Vector3.Dot(lookDirection, dir) >= Mathf.Cos(angle * 0.5f * Mathf.Deg2Rad)){
-                    
-                    Debug.DrawLine(origin, targetPos, Color.gray);
-                    targetDoor = targetPos;
-                    return true;
-                    
-                }
+                NPCGroupController groupController = transform.parent.GetComponent<NPCGroupController>();
+                if (groupController.getNumberOfNPCs() >= 2){
+
+                    //float dist = Vector3.Distance(origin, targetPos);
+                    Vector3 dir = (targetPos - origin).normalized;
+                    if (Vector3.Dot(lookDirection, dir) >= Mathf.Cos(angle * 0.5f * Mathf.Deg2Rad)){
+
+                        if(groupController.getDoorNPC1() != null && groupController.getDoorNPC1() == this)
+                            Debug.DrawLine(origin, targetPos, Color.gray);
+                        else
+                        if (groupController.getDoorNPC2() != null && groupController.getDoorNPC2() == this)
+                            Debug.DrawLine(origin, target2Pos, Color.gray);
+
+                        targetDoor = targetPos;
+                        groupController.setDoorPosition(target2Pos);
+                        groupController.setDoor(door);
+                        return true;
+                    }
+                }else
+                    groupController.setDoorPosition(Vector3.zero);
             }
         }
+        targetDoor = null;
         return false;
     }
 
@@ -429,3 +452,5 @@ public class NPCController : MonoBehaviour
     }
     #endregion
 }
+
+//public enum SORT { FIRST, SECOND, NONE};

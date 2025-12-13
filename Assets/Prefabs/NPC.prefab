@@ -1087,7 +1087,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 4631382035779080308}
   m_Enabled: 1
   m_AgentTypeID: -1372625422
-  m_Radius: 0.5
+  m_Radius: 0.35
   m_Speed: 3.5
   m_Acceleration: 8
   avoidancePriority: 50
@@ -1124,7 +1124,7 @@ MonoBehaviour:
   angularSpeed: 300
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 129
+    m_Bits: 2177
   smokeMask:
     serializedVersion: 2
     m_Bits: 128
