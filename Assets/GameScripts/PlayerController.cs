@@ -22,8 +22,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private int smokeEnergy = 4;
     [SerializeField] private int dashEnergy = 6;
     [SerializeField] private int projectileEnergy = 1;
+    [SerializeField] private int maxProjectileAmount = 4;
+                     private int currentProjectileAmount;        
     [SerializeField] private float timeToRestoreEnergy = 4f;
-                     private float timer = 0f;
+    [SerializeField] private float timeToRestoreProjectile = 10f;
+                     private float timerEnergy = 0f;
+                     private float timerProjectile= 0f;
+
+    [Space(10)]
+    [SerializeField] private bool dashing;
+    [SerializeField] private float dashTime = 0.12f;
+    [SerializeField] private float dashSpeed = 15f;
+    private float dashTimer;
+    [SerializeField] private float dashCooldown = 15f;
+    private float dashCooldownTimer;
 
     [Space(10)]
     [Header("PlayerConfig")]
@@ -47,11 +59,12 @@ public class PlayerController : MonoBehaviour
 
     public LayerMask projetileLayer;
 
+    [SerializeField] private HUDController hud;
+
     //###########CAM FOV
     private StarterAssets.ThirdPersonController ctrl;
     private StarterAssets.StarterAssetsInputs inputs;
     private float baseFov;
-    private float dashTime;
 
 #if ENABLE_INPUT_SYSTEM
     private PlayerInput _playerInput;
@@ -84,6 +97,13 @@ private StarterAssets.StarterAssetsInputs _input;
 
         //###############################################
         currentEnergy = maxEnergy;
+        currentProjectileAmount = maxProjectileAmount;
+
+        hud.setEnergy(maxEnergy);
+        hud.SetProjectileAmount(maxProjectileAmount);
+        hud.SetImageState(true, ABILITIES.PROJECTILE);
+        hud.SetImageState(true, ABILITIES.DASH);
+        hud.SetImageState(true, ABILITIES.SMOKE);
     }
 
     void Awake()
@@ -91,7 +111,6 @@ private StarterAssets.StarterAssetsInputs _input;
         ctrl = GetComponent <StarterAssets.ThirdPersonController>();
         baseFov = FindObjectOfType<Cinemachine.CinemachineBrain>().GetComponent<Camera>().fieldOfView;
         inputs = GetComponent<StarterAssets.StarterAssetsInputs>();
-        dashTime = ctrl.dashTime;
     }
 
     // Update is called once per frame
@@ -109,19 +128,24 @@ private StarterAssets.StarterAssetsInputs _input;
         }
 
         //SMOKE
-        if (_input.smoke){
+        if (_input.smoke && hasEnergy(smokeEnergy)){
             _input.action = false;
             Instantiate(smokeGranade, dropObjectPoint.position, dropObjectPoint.rotation);
             print("smoke");
-            _input.smoke = false;
+            consumeEnergy(smokeEnergy);
+            hud.setEnergy(currentEnergy);
         }
+        _input.smoke = false;
+
+        //DASH
+        HandleDashInput();
+        UpdateDash();
 
         //ARREMESSO
         Vector3 euler = spawnPoint.rotation.eulerAngles;
         euler.x = cam.transform.rotation.eulerAngles.x;
 
-        //eixo Y do player vai ser o 0
-        float playerY = transform.eulerAngles.y;
+        float playerY = transform.eulerAngles.y; //eixo Y do player vai ser o 0
         float cameraY = cam.transform.eulerAngles.y;
         cameraY = Mathf.DeltaAngle(playerY, cameraY) + playerY;
         float clampedY = Mathf.Clamp(cameraY, playerY - clampThrowAngle, playerY + clampThrowAngle);
@@ -131,22 +155,68 @@ private StarterAssets.StarterAssetsInputs _input;
 
         DrawTrajectory();
         UpdateAim();
-        if (Input.GetKeyDown(KeyCode.R))
-        {
+        if (Input.GetKeyDown(KeyCode.R) && hasEnergy(projectileEnergy) && currentProjectileAmount > 0){
             LaunchProjectile();
+            consumeEnergy(projectileEnergy);
+            hud.setEnergy(currentEnergy);
+            currentProjectileAmount--;
         }
 
-        if (inputs.dash) StartCoroutine(DashRoutine());
-
-        //ENERGIA
+        //RESTORE ENERGY
         if(currentEnergy < maxEnergy){
-            timer += Time.deltaTime;
-            if (timer >= timeToRestoreEnergy){
+            timerEnergy += Time.deltaTime;
+            if (timerEnergy >= timeToRestoreEnergy){
                 currentEnergy += 1;
-                timer = 0f;
+                timerEnergy = 0f;
+                hud.setEnergy(currentEnergy);
             }
         }
-        
+
+        //RESTORE PROJECTILES
+        if(currentProjectileAmount < maxProjectileAmount){
+            timerProjectile += Time.deltaTime;
+            if (timerProjectile >= timeToRestoreProjectile){
+                currentProjectileAmount += 1;
+                timerProjectile = 0f;
+                hud.SetProjectileAmount(currentProjectileAmount);
+            }
+        }
+
+        checkIcons();
+    }
+
+    void HandleDashInput(){
+        if (_input.dash){
+            if (hasEnergy(dashEnergy) && dashCooldownTimer <= 0f){
+                StartCoroutine(DashRoutine());
+                dashing = true;
+                dashTimer = dashTime;
+                dashCooldownTimer = dashCooldown;
+                consumeEnergy(dashEnergy);
+                hud.setEnergy(currentEnergy);
+            }
+            _input.dash = false;
+        }
+    }
+
+    void UpdateDash(){
+        if (dashCooldownTimer > 0f) dashCooldownTimer -= Time.deltaTime;
+
+        if (!dashing) return;
+
+        dashTimer -= Time.deltaTime;
+        gameObject.GetComponent<CharacterController>().Move(transform.forward * dashSpeed * Time.deltaTime);
+        if (dashTimer <= 0f) dashing = false;
+    }
+
+    private bool hasEnergy(int ability) => currentEnergy - ability >= 0;
+    private void consumeEnergy(int ability) => currentEnergy -= ability;
+    private void checkIcons(){
+        hud.SetImageState(hasEnergy(dashEnergy), ABILITIES.DASH);
+        hud.SetImageState(hasEnergy(smokeEnergy), ABILITIES.SMOKE);
+        bool projectileCondition = hasEnergy(projectileEnergy) && currentProjectileAmount > 0;
+        hud.SetImageState(projectileCondition, ABILITIES.PROJECTILE);
+        hud.SetProjectileAmount(currentProjectileAmount);
     }
 
     private GameObject CheckRangeDoor()

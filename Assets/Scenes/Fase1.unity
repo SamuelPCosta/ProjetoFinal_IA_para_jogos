@@ -13322,6 +13322,10 @@ MonoBehaviour:
   dashEnergy: 6
   projectileEnergy: 1
   timeToRestoreEnergy: 4
+  dashing: 0
+  dashTime: 0.12
+  dashSpeed: 15
+  dashCooldown: 2
   smokeGranade: {fileID: 1698903733295967264, guid: 3748ea50c333fa24f8d27c9ce3c5aeb1,
     type: 3}
   dropObjectPoint: {fileID: 15813447}
@@ -19541,10 +19545,6 @@ MonoBehaviour:
   Gravity: -15
   JumpTimeout: 0.3
   FallTimeout: 0.15
-  dashing: 0
-  dashTime: 0.15
-  dashSpeed: 18
-  dashCooldown: 2
   Grounded: 1
   GroundedOffset: -0.14
   GroundedRadius: 0.28

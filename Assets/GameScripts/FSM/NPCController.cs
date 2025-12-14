@@ -11,11 +11,11 @@ public class NPCController : MonoBehaviour
     [SerializeField] private float eyeHeight = 1.5f;
     [SerializeField] private int segments = 6;
 
-    [Space(10)]
-    [Header("Downward cone of vision")]
-    [SerializeField] private float secondaryRange = 10f;
-    [SerializeField] private float secondaryAngle = 40f;
-    [SerializeField] private float secondaryPitch = -45f;
+    //[Space(10)]
+    //[Header("Downward cone of vision")]
+    //[SerializeField] private float secondaryRange = 10f;
+    //[SerializeField] private float secondaryAngle = 40f;
+    //[SerializeField] private float secondaryPitch = -45f;
 
     [Space(10)]
     [Header("Hearing")]
@@ -61,6 +61,10 @@ public class NPCController : MonoBehaviour
 
     private int index = -1;
 
+    private float distanceToPlayer = float.MaxValue;
+
+    private StarterAssets.StarterAssetsInputs playerInputs = null;
+
     //##############################
     NPCStateMachine npcStateMachine;
     NPCPatrol npcPatrol;
@@ -103,13 +107,16 @@ public class NPCController : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    void Update(){
+        if (playerInputs == null) playerInputs = FindObjectOfType<StarterAssets.StarterAssetsInputs>();
+
+        distanceToPlayer = Vector3.Distance(playerInputs.transform.position, this.transform.position);
+
         if (npcStateMachine != null)
             npcStateMachine.Update();
 
         if (!isDisoriented) {
-            if (DetectPlayerByVision() || DetectPlayerBySound()) //|| DetectPlayerByVisionAbove()
+            if (DetectPlayerByVision() || DetectPlayerBySound())
                 Debug.Log("JOGADOR DETECTADO!");
             else { 
                 //checar portas trancadas
@@ -134,6 +141,7 @@ public class NPCController : MonoBehaviour
     public Vector3? getTargetDoor() => targetDoor;
     public bool getSeeingSmoke() => seeingSmoke;
     public bool resetSeeingSmoke() => seeingSmoke = false;
+    public float getDistance() => distanceToPlayer;
 
     public void setCenterpoint(Vector3 point) => centerpoint = point;
 
@@ -209,23 +217,22 @@ public class NPCController : MonoBehaviour
             if (!hit.CompareTag("Player")) continue;
 
             Vector3 playerPos = hit.bounds.center;
-            Vector3 dir = (playerPos - transform.position).normalized;
             NavMeshHit navHit;
+            Vector3 dir = Vector3.zero;
 
             // Atualiza ultimo ponto
             if (NavMesh.SamplePosition(playerPos, out navHit, 2f, agent.areaMask))
                 lastKnownTargetPosition = navHit.position;
 
-            StarterAssets.StarterAssetsInputs playerInputs = hit.GetComponent<StarterAssets.StarterAssetsInputs>();
             Transform playerTransform = hit.transform;
             currentPlayerDirection = playerTransform.forward;
             if (playerInputs != null) {
                 bool isLoud = !playerInputs.crouch && playerInputs.move != Vector2.zero;
                 if (isLoud) {
-                    print("here");
                     target = lastKnownTargetPosition;
                     Debug.DrawLine(transform.position, target.Value, Color.blue);
-                    detected = true;
+                    if (CanSee(playerPos))
+                        detected = true;
                     lastKnownPlayerDirection = currentPlayerDirection;
                 }
             }
@@ -235,10 +242,22 @@ public class NPCController : MonoBehaviour
         {
             Vector3 dir = (lastKnownTargetPosition - transform.position).normalized;
             target = transform.position + dir * hearingRange; // ponto na borda do range
-            detected = true;
+            bool isLoud = !playerInputs.crouch;
+            if (isLoud) {
+                if (CanSee(target.Value))
+                    detected = true;
+            }
         }
 
         return detected;
+    }
+
+    bool CanSee(Vector3 targetPos)
+    {
+        Vector3 origin = transform.position + Vector3.up * eyeHeight;
+        Vector3 dir = (targetPos - origin).normalized;
+        float dist = Vector3.Distance(origin, targetPos);
+        return !Physics.Raycast(origin, dir, dist, obstacleMask, QueryTriggerInteraction.Collide);
     }
 
     private bool DetectLockedDoor(){
@@ -452,5 +471,3 @@ public class NPCController : MonoBehaviour
     }
     #endregion
 }
-
-//public enum SORT { FIRST, SECOND, NONE};

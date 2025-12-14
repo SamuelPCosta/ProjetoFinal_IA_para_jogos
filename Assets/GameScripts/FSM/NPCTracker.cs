@@ -50,13 +50,6 @@ public class NPCTracker : IState
             return;
         }
 
-        //if (controller.agent.remainingDistance <= controller.agent.stoppingDistance &&
-        //    controller.agent.velocity.magnitude < 0.05f)
-        //{
-        //    machine.changeState(patrol);
-        //    return;
-        //}
-
         if (controller.getSeeingSmoke()) { 
             machine.changeState(disoriented);
             controller.resetSeeingSmoke();
