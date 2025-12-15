@@ -27,6 +27,9 @@ public class NPCController : MonoBehaviour
     [Space(10)]
     [SerializeField] private float angularSpeed = 300f;
 
+    [Space(10)]
+    [SerializeField] private float distanceToAttack = 1.1f;
+
     [Header("LayerMasks")]
     [Space(10)]
     [SerializeField] private LayerMask obstacleMask;
@@ -65,6 +68,10 @@ public class NPCController : MonoBehaviour
 
     private StarterAssets.StarterAssetsInputs playerInputs = null;
 
+    private Animator animator = null;
+
+    [SerializeField] float defaultAnimSpeed = 1.4f;
+
     //##############################
     NPCStateMachine npcStateMachine;
     NPCPatrol npcPatrol;
@@ -86,6 +93,9 @@ public class NPCController : MonoBehaviour
         {
             Debug.LogError("Componente NavMeshAgent ausente no NPC!");
         }
+
+        if (animator == null)
+            animator = GetComponent<Animator>();
     }
 
     public void InitStates()
@@ -135,6 +145,22 @@ public class NPCController : MonoBehaviour
             target = null;
 
         HandleRotation();
+        //UpdateWalkAnimSpeed();
+        }
+
+    void UpdateWalkAnimSpeed(){
+        Animator anim = GetComponent<Animator>();
+        AnimatorStateInfo state = anim.GetCurrentAnimatorStateInfo(0);
+
+        if (state.IsName("Walking"))
+        {
+            float factor = agent.velocity.magnitude / agent.speed;
+            anim.speed = Mathf.Max(0.1f, factor);
+        }
+        else
+        {
+            anim.speed = defaultAnimSpeed;
+        }
     }
 
     public Vector3? getTarget() => target;
@@ -142,6 +168,7 @@ public class NPCController : MonoBehaviour
     public bool getSeeingSmoke() => seeingSmoke;
     public bool resetSeeingSmoke() => seeingSmoke = false;
     public float getDistance() => distanceToPlayer;
+    public float getMinDistanceToAttack() => distanceToAttack;
 
     public void setCenterpoint(Vector3 point) => centerpoint = point;
 
@@ -325,6 +352,15 @@ public class NPCController : MonoBehaviour
 
     public int getNPCIndex() => index;
 
+    public void setTriggerAnim(string animation){
+        if(animator != null)
+            animator.SetTrigger(animation);
+    }
+    public void setAnimNow(string animation)
+    {
+        animator.Play(animation, 0, 0f);
+    }
+
     void OnDrawGizmos()
     {
         DrawFieldOfViewFilled(Color.red);
@@ -335,9 +371,7 @@ public class NPCController : MonoBehaviour
         if (centerpoint != Vector3.zero)
             DrawCenterPatrol();
     }
-
     #region drawDebug
-
     private void DrawFieldOfViewFilled(Color color)
     {
         if (viewMesh == null)
@@ -351,7 +385,6 @@ public class NPCController : MonoBehaviour
         Gizmos.color = color * 0.5f;
         Gizmos.DrawMesh(viewMesh, transform.position + Vector3.up * eyeHeight, transform.rotation);
     }
-
     private void DrawFieldOfViewBorders(bool isGizmos, Color color)
     {
         Vector3 origin = transform.position + Vector3.up * eyeHeight;
@@ -411,7 +444,6 @@ public class NPCController : MonoBehaviour
             last = cur;
         }
     }
-
     private void DrawHearingZoneProjectile(Color color)
     {
         Gizmos.color = color * 0.5f;
@@ -426,7 +458,6 @@ public class NPCController : MonoBehaviour
             last = cur;
         }
     }
-
     private void CreateViewMesh(Mesh mesh)
     {
         int vertexCount = segments + 2;
@@ -460,8 +491,6 @@ public class NPCController : MonoBehaviour
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
     }
-
-
     private void DrawCenterPatrol()
     {
         float s = 0.5f;

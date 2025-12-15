@@ -14,6 +14,7 @@ public class NPCGroupController : MonoBehaviour
 
     private Vector3 doorPosition2 = Vector3.zero;
     private DoorController door = null;
+    private bool canOpen = true;
 
     // Start is called before the first frame update
     void Start()
@@ -99,8 +100,6 @@ public class NPCGroupController : MonoBehaviour
         return transform.childCount;
     }
 
-    //public bool isDoorLocked() => doorLocked;
-
     public void setDoorNPC1(NPCController npc) => doorNPC1 = npc;
     public void setDoorNPC2(NPCController npc) => doorNPC2 = npc;
 
@@ -113,20 +112,68 @@ public class NPCGroupController : MonoBehaviour
     public DoorController getDoor() => door;
 
     private void checkDoor(){
+        if(getDoorNPC1().getTarget() != null || getDoorNPC2().getTarget() != null)
+        {
+            setDoorNPC1(null);
+            setDoorNPC2(null);
+            return;
+        }
         if(door != null){
             if ((!doorNPC1.agent.pathPending && doorNPC1.agent.remainingDistance <= doorNPC1.agent.stoppingDistance) &&
-                (!doorNPC2.agent.pathPending && doorNPC2.agent.remainingDistance <= doorNPC2.agent.stoppingDistance)){
+                !(!doorNPC2.agent.pathPending && doorNPC2.agent.remainingDistance <= doorNPC2.agent.stoppingDistance)){
+                // So 1 chegou ao destino
+                getDoorNPC1().setTriggerAnim("Idle");
+            }
+            else
+            if ((!doorNPC1.agent.pathPending && doorNPC1.agent.remainingDistance <= doorNPC1.agent.stoppingDistance) &&
+                (!doorNPC2.agent.pathPending && doorNPC2.agent.remainingDistance <= doorNPC2.agent.stoppingDistance) &&
+                doorNPC1.getTarget() == null && doorNPC2.getTarget() == null)
+            {
                 // Chegaram ao destino
-                Invoke(nameof(UnlockDoorDelayed), 1f);
+                getDoorNPC1().setTriggerAnim("Idle");
+                getDoorNPC2().setTriggerAnim("Idle");
+                if (canOpen) { 
+                    Invoke(nameof(kickingDoor), .5f);
+                    Invoke(nameof(UnlockDoorDelayed), 1f);
+                    Invoke(nameof(ResetStateAfterDoor), 1.8f);
+                    canOpen = false;
+                }
             }
         }
+    }
+
+    private void kickingDoor(){
+        Quaternion rot = Quaternion.LookRotation(-door.transform.right);
+
+        StartCoroutine(SmoothRotate(doorNPC1.transform, rot));
+        StartCoroutine(SmoothRotate(doorNPC2.transform, rot));
+
+        getDoorNPC1().setAnimNow("Kicking");
+        getDoorNPC2().setAnimNow("Kicking");
+    }
+
+    IEnumerator SmoothRotate(Transform t, Quaternion target){
+        Quaternion start = t.rotation;
+        float time = 0f;
+        while (time < 0.5f){
+            time += Time.deltaTime;
+            t.rotation = Quaternion.Slerp(start, target, time / 0.5f);
+            yield return null;
+        }
+        t.rotation = target;
     }
 
     private void UnlockDoorDelayed(){
         if (door != null){
             getDoor().UnlockDoor();
-            setDoorNPC1(null);
-            setDoorNPC2(null);
         }
+    }
+
+    private void ResetStateAfterDoor(){
+        setDoorNPC1(null);
+        setDoorNPC2(null);
+        getDoorNPC1().setTriggerAnim("Idle");
+        getDoorNPC2().setTriggerAnim("Idle");
+        canOpen = true;
     }
 }

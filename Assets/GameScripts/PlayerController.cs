@@ -156,10 +156,13 @@ private StarterAssets.StarterAssetsInputs _input;
         DrawTrajectory();
         UpdateAim();
         if (Input.GetKeyDown(KeyCode.R) && hasEnergy(projectileEnergy) && currentProjectileAmount > 0){
-            LaunchProjectile();
+            Invoke("LaunchProjectile", .2f);
             consumeEnergy(projectileEnergy);
             hud.setEnergy(currentEnergy);
             currentProjectileAmount--;
+            Animator animator = GetComponent<Animator>();
+            if (animator != null)
+                animator.SetTrigger("Throw");
         }
 
         //RESTORE ENERGY
@@ -218,7 +221,13 @@ private StarterAssets.StarterAssetsInputs _input;
         hud.SetImageState(projectileCondition, ABILITIES.PROJECTILE);
         hud.SetProjectileAmount(currentProjectileAmount);
     }
+    public void receiveDamage()
+    {
+        pointsOfLife--;
+    }
 
+
+    //################################################
     private GameObject CheckRangeDoor()
     {
         Collider playerCol = GetComponent<CharacterController>();
@@ -319,11 +328,17 @@ private StarterAssets.StarterAssetsInputs _input;
             float t = p.totalTime * i / steps;
             Vector3 cur = start + new Vector3(vel.x * t, vel.y * t - 0.5f * p.g * t * t, vel.z * t);
             Vector3 dir = cur - last;
+
+            Vector3 endPoint = line.GetPosition(line.positionCount - 1);
+
             if (Physics.Raycast(last, dir.normalized, out var hit, dir.magnitude, everythingButProjectile))
             {
                 aimObject.position = hit.point;
                 return;
             }
+            else
+                aimObject.position = endPoint;
+
             last = cur;
         }
     }

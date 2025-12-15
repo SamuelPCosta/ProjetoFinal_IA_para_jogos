@@ -20,6 +20,7 @@ public class NPCDisoriented : IState
         controller.agent.ResetPath();
         controller.setDisoriented(true);
         timer = controller.TimeDesoriented;
+        controller.setTriggerAnim("Dizzy");
     }
 
     void IState.Update()

@@ -27,9 +27,15 @@ public class NPCTracker : IState
 
             controller.transform.rotation = controller.agent.transform.rotation;
         }
+        controller.setTriggerAnim("Walking");
     }
 
     void IState.Update(){
+        if (controller.agent.remainingDistance <= controller.agent.stoppingDistance)
+            controller.setTriggerAnim("Idle");
+        else
+            controller.setTriggerAnim("Walking");
+
         if (checkingNoise){
             if (controller.agent.hasPath && controller.agent.remainingDistance <= controller.agent.stoppingDistance){
                 checkingNoise = false;
@@ -57,19 +63,22 @@ public class NPCTracker : IState
 
         if (controller.getTarget() != null) { 
             controller.agent.SetDestination(controller.getTarget().Value);
+            if (controller.getDistance() <= controller.getMinDistanceToAttack())
+            {
+                //TODO
+                Debug.Log("Atacando");
+            }
             return;
         }
 
         Vector3 noise = controller.getNoise();
         if (noise != Vector3.zero){
-            //controller.resetNoise();
             checkingNoise = true;
             controller.agent.SetDestination(noise);
+            controller.setTriggerAnim("Walking");
         }
         else
-        {
             checkingNoise = false;
-        }
     }
 
     public void Exit() {
@@ -77,8 +86,7 @@ public class NPCTracker : IState
         //controller.resetNoise();
     }
 
-    public void SetDependencies(NPCPatrol patrol, NPCDisoriented disoriented)
-    {
+    public void SetDependencies(NPCPatrol patrol, NPCDisoriented disoriented){
         this.patrol = patrol;
         this.disoriented = disoriented;
     }

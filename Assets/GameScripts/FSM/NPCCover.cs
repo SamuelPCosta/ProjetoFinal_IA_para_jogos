@@ -73,6 +73,7 @@ public class NPCCover : IState
     {
         if (wait)
         {
+            controller.setTriggerAnim("Idle");
             timer += Time.deltaTime;
 
             Vector3 lookDir = center - controller.transform.position;
@@ -104,6 +105,7 @@ public class NPCCover : IState
 
         if (controller.getNPCIndex() == secondNPC_cover)
         {
+            controller.setTriggerAnim("WalkingBackwards");
             GameObject[] npcs = GameObject.FindGameObjectsWithTag("NPC");
             GameObject targetNPC = null;
             float shortestDistance = Mathf.Infinity;
@@ -134,7 +136,8 @@ public class NPCCover : IState
 
                 return;
             }
-        }
+        }else
+            controller.setTriggerAnim("Walking");
 
         float d = Vector3.Distance(waypoints[index].position, controller.transform.position);
         if (d <= minDistanceToPoint)

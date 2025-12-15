@@ -37,6 +37,7 @@ public class NPCPatrol : IState
 
         waypoints = controller.waypoints;
         ComputeCenter();
+        controller.setTriggerAnim("Idle");
     }
 
     void IState.Update(){
@@ -78,6 +79,7 @@ public class NPCPatrol : IState
                 wait = false;
                 timer = 0f;
             }
+            controller.setTriggerAnim("Idle");
             return;
         }
 
@@ -93,6 +95,7 @@ public class NPCPatrol : IState
         }
 
         agent.SetDestination(waypoints[index].position);
+        controller.setTriggerAnim("Walking");
     }
 
     void ComputeCenter()
