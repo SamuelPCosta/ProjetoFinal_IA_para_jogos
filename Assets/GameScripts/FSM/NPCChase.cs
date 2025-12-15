@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine.AI;
 using UnityEngine;
 
-public class NPCTracker : IState
+public class NPCChase : IState
 {
     NPCController controller;
     NPCStateMachine machine;
@@ -12,7 +12,7 @@ public class NPCTracker : IState
 
     private bool checkingNoise = false; 
 
-    public NPCTracker(NPCController controller, NPCStateMachine machine)
+    public NPCChase(NPCController controller, NPCStateMachine machine)
     {
         this.controller = controller;
         this.machine = machine;

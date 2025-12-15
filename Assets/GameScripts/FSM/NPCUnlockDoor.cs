@@ -7,7 +7,7 @@ public class NPCUnlockDoor : IState
 {
     NPCController controller;
     NPCStateMachine machine;
-    NPCTracker tracker;
+    NPCChase tracker;
     NPCCover cover;
     NPCPatrol patrol;
     NPCGroupController groupController;
@@ -64,7 +64,7 @@ public class NPCUnlockDoor : IState
         groupController.setDoor(null);
     }
 
-    public void SetDependencies(NPCPatrol npcPatrol, NPCTracker npcTracker, NPCGroupController npcGroupController) {
+    public void SetDependencies(NPCPatrol npcPatrol, NPCChase npcTracker, NPCGroupController npcGroupController) {
         this.patrol = npcPatrol;
         this.tracker = npcTracker;
         this.groupController = npcGroupController;

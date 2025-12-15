@@ -177,10 +177,10 @@ public class NPCGroupController : MonoBehaviour
     }
 
     private void ResetStateAfterDoor(){
-        setDoorNPC1(null);
-        setDoorNPC2(null);
         getDoorNPC1().setTriggerAnim("Idle");
         getDoorNPC2().setTriggerAnim("Idle");
+        setDoorNPC1(null);
+        setDoorNPC2(null);
         canOpen = true;
     }
 }

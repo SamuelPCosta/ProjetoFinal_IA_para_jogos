@@ -8,7 +8,7 @@ public class NPCCover : IState
     NPCController controller;
     NPCStateMachine machine;
     NPCPatrol patrol;
-    NPCTracker tracker;
+    NPCChase chase;
     NPCUnlockDoor unlockDoor;
     NPCGroupController groupController;
 
@@ -53,6 +53,7 @@ public class NPCCover : IState
         }
         
         waypoints = controller.coverWaypoints;
+        controller.setTriggerAnim("Walking");
 
         if (controller.getNPCIndex() == secondNPC_cover)
             controller.setTriggerAnim("WalkingBackwards");
@@ -75,11 +76,11 @@ public class NPCCover : IState
 
         if (controller.getTarget() != null)
         {
-            machine.changeState(tracker);
+            machine.changeState(chase);
         }
         if (controller.getNoise() != Vector3.zero)
         {
-            machine.changeState(tracker);
+            machine.changeState(chase);
         }
         if (!controller.getCover())
             machine.changeState(patrol);
@@ -200,10 +201,10 @@ public class NPCCover : IState
         center = sum / waypoints.Count;
     }
 
-    public void SetDependencies(NPCPatrol npcPatrol, NPCTracker npcTracker, NPCUnlockDoor npcUnlockDoor, NPCGroupController npcGroupController)
+    public void SetDependencies(NPCPatrol npcPatrol, NPCChase npcChase, NPCUnlockDoor npcUnlockDoor, NPCGroupController npcGroupController)
     {
         this.patrol = npcPatrol;
-        this.tracker = npcTracker;
+        this.chase = npcChase;
         this.unlockDoor = npcUnlockDoor;
         this.groupController = npcGroupController;
     }

@@ -77,7 +77,7 @@ public class NPCController : MonoBehaviour
     //##############################
     NPCStateMachine npcStateMachine;
     NPCPatrol npcPatrol;
-    NPCTracker npcTracker;
+    NPCChase npcChase;
     NPCDisoriented npcDisoriented;
     NPCCover npcCover;
     NPCUnlockDoor npcUnlockDoor;
@@ -104,16 +104,16 @@ public class NPCController : MonoBehaviour
     {
         npcStateMachine = new NPCStateMachine();
         npcPatrol = new NPCPatrol(this, npcStateMachine);
-        npcTracker = new NPCTracker(this, npcStateMachine);
+        npcChase = new NPCChase(this, npcStateMachine);
         npcDisoriented = new NPCDisoriented(this, npcStateMachine);
         npcCover = new NPCCover(this, npcStateMachine);
         npcUnlockDoor = new NPCUnlockDoor(this, npcStateMachine);
 
-        npcPatrol.SetDependencies(npcTracker, npcCover, npcUnlockDoor, transform.parent.GetComponent<NPCGroupController>());
-        npcTracker.SetDependencies(npcPatrol, npcDisoriented);
+        npcPatrol.SetDependencies(npcChase, npcCover, npcUnlockDoor, transform.parent.GetComponent<NPCGroupController>());
+        npcChase.SetDependencies(npcPatrol, npcDisoriented);
         npcDisoriented.SetDependencies(npcPatrol);
-        npcCover.SetDependencies(npcPatrol, npcTracker, npcUnlockDoor, transform.parent.GetComponent<NPCGroupController>());
-        npcUnlockDoor.SetDependencies(npcPatrol, npcTracker, transform.parent.GetComponent<NPCGroupController>());
+        npcCover.SetDependencies(npcPatrol, npcChase, npcUnlockDoor, transform.parent.GetComponent<NPCGroupController>());
+        npcUnlockDoor.SetDependencies(npcPatrol, npcChase, transform.parent.GetComponent<NPCGroupController>());
 
         npcStateMachine.changeState(npcPatrol);
     }
@@ -123,8 +123,8 @@ public class NPCController : MonoBehaviour
         if (!getStatus())
             return;
         if (playerInputs == null) playerInputs = FindObjectOfType<StarterAssets.StarterAssetsInputs>();
-
-        distanceToPlayer = Vector3.Distance(playerInputs.transform.position, this.transform.position);
+        if (playerInputs != null)
+            distanceToPlayer = Vector3.Distance(playerInputs.transform.position, this.transform.position);
 
         if (npcStateMachine != null)
             npcStateMachine.Update();
@@ -367,7 +367,9 @@ public class NPCController : MonoBehaviour
     }
     public void setAnimNow(string animation)
     {
-        animator.Play(animation, 0, 0f);
+        if (animator.GetCurrentAnimatorStateInfo(0).IsName(animation)) return;
+        //animator.Play(animation, 0, 0f);
+        animator.CrossFade(animation, 0.15f, 0, 0f);
     }
 
     public void kill()
