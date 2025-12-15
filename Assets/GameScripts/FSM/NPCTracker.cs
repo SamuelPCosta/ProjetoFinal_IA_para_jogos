@@ -19,6 +19,7 @@ public class NPCTracker : IState
     }
 
     public void Enter() {
+        controller.PlayAudio();
         checkingNoise = false;
         if (controller.agent != null)
         {
@@ -70,6 +71,8 @@ public class NPCTracker : IState
             {
                 //TODO
                 Debug.Log("Atacando");
+                controller.setTriggerAnim("Attacking");
+                controller.attack();
             }
             return;
         }

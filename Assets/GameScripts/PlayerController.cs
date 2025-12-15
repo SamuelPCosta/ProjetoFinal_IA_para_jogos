@@ -61,6 +61,8 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private HUDController hud;
 
+    private bool touchingWinGate = false;
+
     //###########CAM FOV
     private StarterAssets.ThirdPersonController ctrl;
     private StarterAssets.StarterAssetsInputs inputs;
@@ -104,6 +106,9 @@ private StarterAssets.StarterAssetsInputs _input;
         hud.SetImageState(true, ABILITIES.PROJECTILE);
         hud.SetImageState(true, ABILITIES.DASH);
         hud.SetImageState(true, ABILITIES.SMOKE);
+        hud.setPointsOfLife(pointsOfLife);
+
+        touchingWinGate = false;
     }
 
     void Awake()
@@ -116,6 +121,12 @@ private StarterAssets.StarterAssetsInputs _input;
     // Update is called once per frame
     void Update()
     {
+        //CONDICAO DE VITORIA
+        if (touchingWinGate) {
+            print("win");
+            FindAnyObjectByType<GameController>().endGame(true);
+        }
+
         //TRANCAR PORTA
         if (_input.action){
             GameObject door = CheckRangeDoor();
@@ -230,6 +241,10 @@ private StarterAssets.StarterAssetsInputs _input;
     public void receiveDamage()
     {
         pointsOfLife--;
+        hud.setPointsOfLife(pointsOfLife);
+        Animator animator = GetComponent<Animator>();
+        if (animator != null)
+            animator.SetTrigger("Damage");
     }
 
 
@@ -362,6 +377,12 @@ private StarterAssets.StarterAssetsInputs _input;
 
     public int getLife() => pointsOfLife;
 
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("WinGate"))
+            touchingWinGate = true;
+    }
 
     float newFov = 200f; 
     System.Collections.IEnumerator DashRoutine()

@@ -9,6 +9,7 @@ TagManager:
   - Door
   - LokedDoor
   - BlindSpot
+  - WinGate
   layers:
   - Default
   - TransparentFX
@@ -22,7 +23,7 @@ TagManager:
   - Door
   - Projectile
   - LokedDoor
-  - 
+  - WinGate
   - 
   - 
   - 

@@ -13,6 +13,7 @@ public class HUDController : MonoBehaviour{
     [SerializeField] private Image projectile;
     [SerializeField] private TextMeshProUGUI projectileAmount;
     [SerializeField] private Color disabledColor;
+    [SerializeField] private GameObject pointsOfLife;
 
     // Start is called before the first frame update
     void Start()
@@ -61,6 +62,11 @@ public class HUDController : MonoBehaviour{
 
     public void SetProjectileAmount(int value){
         projectileAmount.text = "" + value;
+    }
+
+    public void setPointsOfLife(int value){
+        for (int i = 0; i < pointsOfLife.transform.childCount; i++)
+            pointsOfLife.transform.GetChild(i).gameObject.SetActive(i < value);
     }
 }
 

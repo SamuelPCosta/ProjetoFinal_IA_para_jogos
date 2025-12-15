@@ -9,6 +9,8 @@ public class NPCCover : IState
     NPCStateMachine machine;
     NPCPatrol patrol;
     NPCTracker tracker;
+    NPCUnlockDoor unlockDoor;
+    NPCGroupController groupController;
 
     bool wait;
     float timer;
@@ -51,11 +53,26 @@ public class NPCCover : IState
         }
         
         waypoints = controller.coverWaypoints;
+
+        if (controller.getNPCIndex() == secondNPC_cover)
+            controller.setTriggerAnim("WalkingBackwards");
+        else
+            controller.setTriggerAnim("Walking");
         ComputeCenter();
     }
 
     void IState.Update()
     {
+        //if (groupController.getDoorNPC1() == controller) machine.changeState(unlockDoor); //NPC1
+        //if (groupController.getDoorNPC1() != null && groupController.getDoorNPC2() == null)
+        //{ //NPC1 TA PRECISANDO DE NPC2
+        //    if (groupController.getDoorNPC1() != controller)
+        //    {
+        //        groupController.setDoorNPC2(controller); //SE VOLUNTARIA A AJUDAR
+        //        machine.changeState(unlockDoor);
+        //    }
+        //}
+
         if (controller.getTarget() != null)
         {
             machine.changeState(tracker);
@@ -183,9 +200,11 @@ public class NPCCover : IState
         center = sum / waypoints.Count;
     }
 
-    public void SetDependencies(NPCPatrol npcPatrol, NPCTracker npcTracker)
+    public void SetDependencies(NPCPatrol npcPatrol, NPCTracker npcTracker, NPCUnlockDoor npcUnlockDoor, NPCGroupController npcGroupController)
     {
         this.patrol = npcPatrol;
         this.tracker = npcTracker;
+        this.unlockDoor = npcUnlockDoor;
+        this.groupController = npcGroupController;
     }
 }

@@ -30,6 +30,7 @@ public class NPCController : MonoBehaviour
 
     [Space(10)]
     [SerializeField] private float distanceToAttack = 1.1f;
+    [SerializeField] private float timeBetweenAttacks = 1.2f;
 
     [Header("LayerMasks")]
     [Space(10)]
@@ -111,7 +112,7 @@ public class NPCController : MonoBehaviour
         npcPatrol.SetDependencies(npcTracker, npcCover, npcUnlockDoor, transform.parent.GetComponent<NPCGroupController>());
         npcTracker.SetDependencies(npcPatrol, npcDisoriented);
         npcDisoriented.SetDependencies(npcPatrol);
-        npcCover.SetDependencies(npcPatrol, npcTracker);
+        npcCover.SetDependencies(npcPatrol, npcTracker, npcUnlockDoor, transform.parent.GetComponent<NPCGroupController>());
         npcUnlockDoor.SetDependencies(npcPatrol, npcTracker, transform.parent.GetComponent<NPCGroupController>());
 
         npcStateMachine.changeState(npcPatrol);
@@ -291,6 +292,10 @@ public class NPCController : MonoBehaviour
     }
 
     private bool DetectLockedDoor(){
+        NPCGroupController groupController = transform.parent.GetComponent<NPCGroupController>();
+        if (groupController.getDoorNPC1() != null) //ja tao indo abrir uma porta (UMA POR VEZ)
+            return false;
+
         Vector3 origin = transform.position + Vector3.up * eyeHeight;
         Collider[] hits = Physics.OverlapSphere(origin, range);
         //RaycastHit hit;
@@ -302,7 +307,6 @@ public class NPCController : MonoBehaviour
                 Vector3 targetPos = door.getFirstPoint();
                 Vector3 target2Pos = door.getSecondPoint();
 
-                NPCGroupController groupController = transform.parent.GetComponent<NPCGroupController>();
                 if (groupController.getNumberOfNPCs() >= 2){
 
                     //float dist = Vector3.Distance(origin, targetPos);
@@ -370,6 +374,19 @@ public class NPCController : MonoBehaviour
     {
         setAnimNow("Death");
         alive = false;
+    }
+
+    float lastAttack = -1f;
+    public void attack()
+    {
+        if (Time.time - lastAttack < timeBetweenAttacks) return;
+        lastAttack = Time.time;
+        FindAnyObjectByType<PlayerController>().receiveDamage();
+    }
+
+    public void PlayAudio()
+    {
+        GetComponent<AudioSource>().Play();
     }
 
     void OnDrawGizmos()
