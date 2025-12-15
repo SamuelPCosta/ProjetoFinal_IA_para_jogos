@@ -8,9 +8,11 @@ public class NPCPatrol : IState
     NPCController controller;
     NPCStateMachine machine;
     NPCChase chase;
+    NPCChaseNoise chaseNoise;
     NPCCover cover;
     NPCUnlockDoor unlockDoor;
     NPCGroupController groupController;
+    NPCDeath death;
 
     bool wait;
     float timer;
@@ -41,11 +43,11 @@ public class NPCPatrol : IState
     }
 
     void IState.Update(){
-        if (!controller.getStatus())
-            return;
+        if (!controller.isAlive())
+            machine.changeState(death);
 
         if (controller.getTarget() != null) machine.changeState(chase);
-        if (controller.getNoise() != Vector3.zero) machine.changeState(chase);
+        if (controller.getNoise() != Vector3.zero) machine.changeState(chaseNoise);
 
         if (groupController.getDoorNPC1() == controller) machine.changeState(unlockDoor); //NPC1
         if (groupController.getDoorNPC1() != null && groupController.getDoorNPC2() == null){ //NPC1 TA PRECISANDO DE NPC2
@@ -108,10 +110,13 @@ public class NPCPatrol : IState
         center = sum / waypoints.Count;
     }
 
-    public void SetDependencies(NPCChase npcChase, NPCCover npcCover, NPCUnlockDoor npcUnlockDoor, NPCGroupController npcGroupController) {
-        this.chase = npcChase;
-        this.cover = npcCover;
-        this.unlockDoor = npcUnlockDoor;
-        this.groupController = npcGroupController;
+    public void SetDependencies(NPCChase chase, NPCCover cover, NPCUnlockDoor unlockDoor, NPCChaseNoise chaseNoise, NPCDeath death, NPCGroupController groupController){
+        this.chase = chase;
+        this.cover = cover;
+        this.unlockDoor = unlockDoor;
+        this.groupController = groupController;
+        this.chaseNoise = chaseNoise;
+        this.death = death;
     }
+
 }

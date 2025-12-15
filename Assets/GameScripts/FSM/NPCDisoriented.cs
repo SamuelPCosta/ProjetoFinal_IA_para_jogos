@@ -8,6 +8,7 @@ public class NPCDisoriented : IState
     NPCController controller;
     NPCStateMachine machine;
     NPCPatrol patrol;
+    NPCDeath death;
     float timer;
 
     public NPCDisoriented(NPCController controller, NPCStateMachine machine)
@@ -33,8 +34,9 @@ public class NPCDisoriented : IState
         controller.setDisoriented(false);
     }
 
-    public void SetDependencies(NPCPatrol patrol)
+    public void SetDependencies(NPCPatrol patrol, NPCDeath death)
     {
         this.patrol = patrol;
+        this.death = death;
     }
 }

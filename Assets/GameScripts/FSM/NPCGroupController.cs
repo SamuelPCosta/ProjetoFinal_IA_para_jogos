@@ -82,7 +82,7 @@ public class NPCGroupController : MonoBehaviour
         int i = 0;
         foreach (Transform npc in transform){
             NPCController npcController = npc.GetComponent<NPCController>();
-            if (npcController.getStatus()) { 
+            if (npcController.isAlive()) { 
                 npcController.setNPCIndex(i);
                 i++;
             }
@@ -101,7 +101,7 @@ public class NPCGroupController : MonoBehaviour
         int count = 0;
         for (int i = 0; i < transform.childCount; i++){
             var npc = transform.GetChild(i).GetComponent<NPCController>();
-            if (npc != null && npc.getStatus())
+            if (npc != null && npc.isAlive())
                 count++;
         }
         return count;

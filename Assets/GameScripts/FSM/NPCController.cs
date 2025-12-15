@@ -12,12 +12,6 @@ public class NPCController : MonoBehaviour
     [SerializeField] private float eyeHeight = 1.5f;
     [SerializeField] private int segments = 6;
 
-    //[Space(10)]
-    //[Header("Downward cone of vision")]
-    //[SerializeField] private float secondaryRange = 10f;
-    //[SerializeField] private float secondaryAngle = 40f;
-    //[SerializeField] private float secondaryPitch = -45f;
-
     [Space(10)]
     [Header("Hearing")]
     [SerializeField] private float hearingRange = 2f;
@@ -78,9 +72,11 @@ public class NPCController : MonoBehaviour
     NPCStateMachine npcStateMachine;
     NPCPatrol npcPatrol;
     NPCChase npcChase;
+    NPCChaseNoise npcChaseNoise;
     NPCDisoriented npcDisoriented;
     NPCCover npcCover;
     NPCUnlockDoor npcUnlockDoor;
+    NPCDeath npcDeath;
 
     // Start is called before the first frame update
     void Start()
@@ -105,22 +101,25 @@ public class NPCController : MonoBehaviour
         npcStateMachine = new NPCStateMachine();
         npcPatrol = new NPCPatrol(this, npcStateMachine);
         npcChase = new NPCChase(this, npcStateMachine);
+        npcChaseNoise = new NPCChaseNoise(this, npcStateMachine);
         npcDisoriented = new NPCDisoriented(this, npcStateMachine);
         npcCover = new NPCCover(this, npcStateMachine);
         npcUnlockDoor = new NPCUnlockDoor(this, npcStateMachine);
+        npcDeath = new NPCDeath(this, npcStateMachine);
 
-        npcPatrol.SetDependencies(npcChase, npcCover, npcUnlockDoor, transform.parent.GetComponent<NPCGroupController>());
+        npcPatrol.SetDependencies(npcChase, npcCover, npcUnlockDoor, npcChaseNoise, npcDeath,transform.parent.GetComponent<NPCGroupController>());
         npcChase.SetDependencies(npcPatrol, npcDisoriented);
-        npcDisoriented.SetDependencies(npcPatrol);
-        npcCover.SetDependencies(npcPatrol, npcChase, npcUnlockDoor, transform.parent.GetComponent<NPCGroupController>());
-        npcUnlockDoor.SetDependencies(npcPatrol, npcChase, transform.parent.GetComponent<NPCGroupController>());
+        npcChaseNoise.SetDependencies(npcPatrol, npcDisoriented, npcChase, npcDeath);
+        npcDisoriented.SetDependencies(npcPatrol, npcDeath);
+        npcCover.SetDependencies(npcPatrol, npcChase, npcUnlockDoor, npcChaseNoise, npcDeath, transform.parent.GetComponent<NPCGroupController>());
+        npcUnlockDoor.SetDependencies(npcPatrol, npcChase, npcDeath, transform.parent.GetComponent<NPCGroupController>());
 
         npcStateMachine.changeState(npcPatrol);
     }
 
     // Update is called once per frame
     void Update(){
-        if (!getStatus())
+        if (!isAlive())
             return;
         if (playerInputs == null) playerInputs = FindObjectOfType<StarterAssets.StarterAssetsInputs>();
         if (playerInputs != null)
@@ -359,7 +358,7 @@ public class NPCController : MonoBehaviour
 
     public int getNPCIndex() => index;
 
-    public bool getStatus() => alive;
+    public bool isAlive() => alive;
 
     public void setTriggerAnim(string animation){
         if(animator != null)
@@ -393,7 +392,7 @@ public class NPCController : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        if (!getStatus())
+        if (!isAlive())
             return;
         DrawFieldOfViewFilled(Color.red);
         DrawFieldOfViewBorders(true, Color.red);

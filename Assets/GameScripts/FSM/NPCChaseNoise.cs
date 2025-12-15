@@ -3,14 +3,21 @@ using System.Collections.Generic;
 using UnityEngine.AI;
 using UnityEngine;
 
-public class NPCChase : IState
+public class NPCChaseNoise : IState
 {
     NPCController controller;
     NPCStateMachine machine;
     NPCPatrol patrol;
+    NPCChase chase;
     NPCDisoriented disoriented;
+    NPCDeath death;
 
-    public NPCChase(NPCController controller, NPCStateMachine machine)
+    float delayTimer = 0f;
+    bool waitingNoise = false;
+
+    private bool checkingNoise = false; 
+
+    public NPCChaseNoise(NPCController controller, NPCStateMachine machine)
     {
         this.controller = controller;
         this.machine = machine;
@@ -18,6 +25,7 @@ public class NPCChase : IState
 
     public void Enter() {
         controller.PlayAudio();
+        checkingNoise = false;
         if (controller.agent != null)
         {
             controller.agent.isStopped = false;
@@ -30,22 +38,39 @@ public class NPCChase : IState
 
     void IState.Update(){
         if (!controller.isAlive())
-            return;
+            machine.changeState(death);
 
         if (controller.agent.remainingDistance <= controller.agent.stoppingDistance)
             controller.setTriggerAnim("Idle");
         else
             controller.setTriggerAnim("Walking");
 
+        if (checkingNoise){
+            if (controller.agent.hasPath && controller.agent.remainingDistance <= controller.agent.stoppingDistance){
+                checkingNoise = false;
+                controller.resetNoise();
+            }
+        }
+
         Vector3 dir = controller.agent.destination - controller.transform.position;
         dir.y = 0; // ignora altura
         float angleToTarget = Vector3.Angle(controller.transform.forward, dir);
 
         if (controller.getTarget() == null &&
+        controller.getNoise() == Vector3.zero &&
         !controller.agent.pathPending &&
         controller.agent.remainingDistance <= controller.agent.stoppingDistance)
         {
-            machine.changeState(patrol);
+            if (!waitingNoise){
+                waitingNoise = true;
+                delayTimer = 0f;
+            }
+
+            delayTimer += Time.deltaTime;
+            if (delayTimer >= 1.5f){
+                machine.changeState(patrol);
+                waitingNoise = false;
+            }
             return;
         }
 
@@ -55,25 +80,30 @@ public class NPCChase : IState
             return;
         }
 
-        if (controller.getTarget() != null) { 
-            controller.agent.SetDestination(controller.getTarget().Value);
-            if (controller.getDistance() <= controller.getMinDistanceToAttack())
-            {
-                //TODO
-                Debug.Log("Atacando");
-                controller.setTriggerAnim("Attacking");
-                controller.attack();
-            }
+        if (controller.getTarget() != null) {
+            machine.changeState(chase);
             return;
         }
 
+        Vector3 noise = controller.getNoise();
+        if (noise != Vector3.zero){
+            checkingNoise = true;
+            controller.agent.SetDestination(noise);
+            controller.setTriggerAnim("Walking");
+        }
+        else
+            checkingNoise = false;
     }
 
-    public void Exit() { }
+    public void Exit() {
+        checkingNoise = false;
+    }
 
-    public void SetDependencies(NPCPatrol patrol, NPCDisoriented disoriented)
+    public void SetDependencies(NPCPatrol patrol, NPCDisoriented disoriented, NPCChase chase, NPCDeath death)
     {
         this.patrol = patrol;
         this.disoriented = disoriented;
+        this.chase = chase;
+        this.death = death;
     }
 }

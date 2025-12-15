@@ -9,8 +9,10 @@ public class NPCCover : IState
     NPCStateMachine machine;
     NPCPatrol patrol;
     NPCChase chase;
+    NPCChaseNoise chaseNoise;
     NPCUnlockDoor unlockDoor;
     NPCGroupController groupController;
+    NPCDeath death;
 
     bool wait;
     float timer;
@@ -64,6 +66,8 @@ public class NPCCover : IState
 
     void IState.Update()
     {
+        if (!controller.isAlive())
+            machine.changeState(death);
         //if (groupController.getDoorNPC1() == controller) machine.changeState(unlockDoor); //NPC1
         //if (groupController.getDoorNPC1() != null && groupController.getDoorNPC2() == null)
         //{ //NPC1 TA PRECISANDO DE NPC2
@@ -80,7 +84,7 @@ public class NPCCover : IState
         }
         if (controller.getNoise() != Vector3.zero)
         {
-            machine.changeState(chase);
+            machine.changeState(chaseNoise);
         }
         if (!controller.getCover())
             machine.changeState(patrol);
@@ -132,7 +136,7 @@ public class NPCCover : IState
                 if (npc == controller.gameObject) continue;
 
                 float distance = Vector3.Distance(controller.transform.position, npc.transform.position);
-                if (distance < shortestDistance && npc.GetComponent<NPCController>().getStatus())
+                if (distance < shortestDistance && npc.GetComponent<NPCController>().isAlive())
                 {
                     shortestDistance = distance;
                     targetNPC = npc;
@@ -201,11 +205,13 @@ public class NPCCover : IState
         center = sum / waypoints.Count;
     }
 
-    public void SetDependencies(NPCPatrol npcPatrol, NPCChase npcChase, NPCUnlockDoor npcUnlockDoor, NPCGroupController npcGroupController)
+    public void SetDependencies(NPCPatrol patrol, NPCChase chase, NPCUnlockDoor unlockDoor, NPCChaseNoise chaseNoise, NPCDeath death, NPCGroupController groupController)
     {
-        this.patrol = npcPatrol;
-        this.chase = npcChase;
-        this.unlockDoor = npcUnlockDoor;
-        this.groupController = npcGroupController;
+        this.patrol = patrol;
+        this.chase = chase;
+        this.unlockDoor = unlockDoor;
+        this.groupController = groupController;
+        this.chaseNoise = chaseNoise;
+        this.death = death;
     }
 }

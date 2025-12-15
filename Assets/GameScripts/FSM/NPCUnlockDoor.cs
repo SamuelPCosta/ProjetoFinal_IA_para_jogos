@@ -12,6 +12,7 @@ public class NPCUnlockDoor : IState
     NPCPatrol patrol;
     NPCGroupController groupController;
     NavMeshAgent agent;
+    NPCDeath death;
     int index;
 
     Vector3 center = Vector3.zero;
@@ -27,8 +28,8 @@ public class NPCUnlockDoor : IState
     public void Enter() { }
 
     void IState.Update(){
-        if (!controller.getStatus())
-            return;
+        if (!controller.isAlive())
+            machine.changeState(death);
 
         if (controller.getTarget() != null)
         {
@@ -64,10 +65,11 @@ public class NPCUnlockDoor : IState
         groupController.setDoor(null);
     }
 
-    public void SetDependencies(NPCPatrol npcPatrol, NPCChase npcTracker, NPCGroupController npcGroupController) {
+    public void SetDependencies(NPCPatrol npcPatrol, NPCChase npcTracker, NPCDeath death, NPCGroupController npcGroupController) {
         this.patrol = npcPatrol;
         this.tracker = npcTracker;
         this.groupController = npcGroupController;
+        this.death = death;
         //this.cover = npcCover;
     }
 }
