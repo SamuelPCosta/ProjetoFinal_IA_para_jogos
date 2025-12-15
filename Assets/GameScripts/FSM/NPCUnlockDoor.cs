@@ -27,6 +27,9 @@ public class NPCUnlockDoor : IState
     public void Enter() { }
 
     void IState.Update(){
+        if (!controller.getStatus())
+            return;
+
         if (controller.getTarget() != null)
         {
             groupController.setDoorNPC1(null);

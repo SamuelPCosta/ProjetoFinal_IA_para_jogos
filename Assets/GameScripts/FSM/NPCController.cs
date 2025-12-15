@@ -5,6 +5,7 @@ using UnityEngine.AI;
 
 public class NPCController : MonoBehaviour
 {
+    private bool alive = true;
     [Header("Cone of vision")]
     [SerializeField] private float range = 6f;
     [SerializeField] private float angle = 80f;
@@ -118,6 +119,8 @@ public class NPCController : MonoBehaviour
 
     // Update is called once per frame
     void Update(){
+        if (!getStatus())
+            return;
         if (playerInputs == null) playerInputs = FindObjectOfType<StarterAssets.StarterAssetsInputs>();
 
         distanceToPlayer = Vector3.Distance(playerInputs.transform.position, this.transform.position);
@@ -352,6 +355,8 @@ public class NPCController : MonoBehaviour
 
     public int getNPCIndex() => index;
 
+    public bool getStatus() => alive;
+
     public void setTriggerAnim(string animation){
         if(animator != null)
             animator.SetTrigger(animation);
@@ -361,8 +366,16 @@ public class NPCController : MonoBehaviour
         animator.Play(animation, 0, 0f);
     }
 
+    public void kill()
+    {
+        setAnimNow("Death");
+        alive = false;
+    }
+
     void OnDrawGizmos()
     {
+        if (!getStatus())
+            return;
         DrawFieldOfViewFilled(Color.red);
         DrawFieldOfViewBorders(true, Color.red);
         DrawHearingZone(Color.blue);

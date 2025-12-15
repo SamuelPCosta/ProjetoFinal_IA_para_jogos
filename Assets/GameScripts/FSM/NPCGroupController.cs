@@ -82,8 +82,10 @@ public class NPCGroupController : MonoBehaviour
         int i = 0;
         foreach (Transform npc in transform){
             NPCController npcController = npc.GetComponent<NPCController>();
-            npcController.setNPCIndex(i);
-            i++;
+            if (npcController.getStatus()) { 
+                npcController.setNPCIndex(i);
+                i++;
+            }
         }
     }
 
@@ -95,9 +97,14 @@ public class NPCGroupController : MonoBehaviour
                 npc.GetComponent<NPCController>().checkNoise(collisionPoint);
     }
 
-    public int getNumberOfNPCs()
-    {
-        return transform.childCount;
+    public int getNumberOfNPCs(){
+        int count = 0;
+        for (int i = 0; i < transform.childCount; i++){
+            var npc = transform.GetChild(i).GetComponent<NPCController>();
+            if (npc != null && npc.getStatus())
+                count++;
+        }
+        return count;
     }
 
     public void setDoorNPC1(NPCController npc) => doorNPC1 = npc;

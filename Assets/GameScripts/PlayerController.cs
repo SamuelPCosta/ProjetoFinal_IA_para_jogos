@@ -125,6 +125,12 @@ private StarterAssets.StarterAssetsInputs _input;
                 print("LockDoor");
                 _input.action = false;
             }
+            GameObject npc = CheckBlindSpot();
+            if(npc != null)
+            {
+                npc.GetComponent<NPCController>().kill();
+                Destroy(npc.transform.GetChild(2).gameObject);
+            }
         }
 
         //SMOKE
@@ -239,6 +245,17 @@ private StarterAssets.StarterAssetsInputs _input;
         }
         return null;
     }
+
+    private GameObject CheckBlindSpot()
+    {
+        Collider c = GetComponent<CharacterController>();
+        Collider[] hits = Physics.OverlapBox(c.bounds.center, c.bounds.extents);
+        foreach (var h in hits)
+            if (h.CompareTag("BlindSpot"))
+                return h.transform.parent != null ? h.transform.parent.gameObject : h.gameObject;
+        return null;
+    }
+
 
     private (float totalTime, Vector3 planarVel, float initialVy, float g) CalculateLaunchParameters(Vector3 start, Vector3 end, float maxHeight, float horizontalBoost){
         float g = Mathf.Abs(Physics.gravity.y);

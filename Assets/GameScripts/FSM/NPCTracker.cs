@@ -31,6 +31,9 @@ public class NPCTracker : IState
     }
 
     void IState.Update(){
+        if (!controller.getStatus())
+            return;
+
         if (controller.agent.remainingDistance <= controller.agent.stoppingDistance)
             controller.setTriggerAnim("Idle");
         else

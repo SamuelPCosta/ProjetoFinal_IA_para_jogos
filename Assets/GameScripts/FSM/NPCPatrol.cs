@@ -41,6 +41,8 @@ public class NPCPatrol : IState
     }
 
     void IState.Update(){
+        if (!controller.getStatus())
+            return;
 
         if (controller.getTarget() != null) machine.changeState(tracker);
         if (controller.getNoise() != Vector3.zero) machine.changeState(tracker);

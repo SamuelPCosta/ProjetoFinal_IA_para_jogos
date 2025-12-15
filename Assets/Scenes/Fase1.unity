@@ -235,8 +235,8 @@ LineRenderer:
     colorGradient:
       serializedVersion: 2
       key0: {r: 1, g: 1, b: 1, a: 0}
-      key1: {r: 1, g: 1, b: 1, a: 0.5882353}
-      key2: {r: 1, g: 1, b: 1, a: 0.5882353}
+      key1: {r: 1, g: 1, b: 1, a: 0.3137255}
+      key2: {r: 1, g: 1, b: 1, a: 0.3137255}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
       key5: {r: 0, g: 0, b: 0, a: 0}
@@ -3356,7 +3356,7 @@ PrefabInstance:
     - target: {fileID: 4206624935916997455, guid: 128955abaf9579d48ba7dfc941b6f828,
         type: 3}
       propertyPath: TimePatrol
-      value: 2
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 4206624935916997455, guid: 128955abaf9579d48ba7dfc941b6f828,
         type: 3}
@@ -8203,7 +8203,7 @@ PrefabInstance:
     - target: {fileID: 4206624935916997455, guid: 128955abaf9579d48ba7dfc941b6f828,
         type: 3}
       propertyPath: TimePatrol
-      value: 2
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 4206624935916997455, guid: 128955abaf9579d48ba7dfc941b6f828,
         type: 3}
@@ -22755,7 +22755,7 @@ PrefabInstance:
     - target: {fileID: 4631382035779080308, guid: 128955abaf9579d48ba7dfc941b6f828,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4645630393581876815, guid: 128955abaf9579d48ba7dfc941b6f828,
         type: 3}
