@@ -26,6 +26,11 @@ public class NPCDisoriented : IState
 
     void IState.Update()
     {
+        if (!controller.isAlive()){
+            machine.changeState(death);
+            return;
+        }
+
         timer -= Time.deltaTime;
         if (timer <= 0f) machine.changeState(patrol);
     }

@@ -65,11 +65,11 @@ public class NPCUnlockDoor : IState
         groupController.setDoor(null);
     }
 
-    public void SetDependencies(NPCPatrol npcPatrol, NPCChase npcTracker, NPCDeath death, NPCGroupController npcGroupController) {
+    public void SetDependencies(NPCPatrol npcPatrol, NPCChase npcTracker, NPCDeath death, NPCCover npcCover, NPCGroupController npcGroupController) {
         this.patrol = npcPatrol;
         this.tracker = npcTracker;
         this.groupController = npcGroupController;
         this.death = death;
-        //this.cover = npcCover;
+        this.cover = npcCover;
     }
 }

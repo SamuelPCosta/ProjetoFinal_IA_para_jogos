@@ -74,9 +74,9 @@ public class NPCChaseNoise : IState
             return;
         }
 
-        if (controller.getSeeingSmoke()) { 
-            machine.changeState(disoriented);
+        if (controller.getSeeingSmoke()) {
             controller.resetSeeingSmoke();
+            machine.changeState(disoriented);
             return;
         }
 

@@ -112,7 +112,7 @@ public class NPCController : MonoBehaviour
         npcChaseNoise.SetDependencies(npcPatrol, npcDisoriented, npcChase, npcDeath);
         npcDisoriented.SetDependencies(npcPatrol, npcDeath);
         npcCover.SetDependencies(npcPatrol, npcChase, npcUnlockDoor, npcChaseNoise, npcDeath, transform.parent.GetComponent<NPCGroupController>());
-        npcUnlockDoor.SetDependencies(npcPatrol, npcChase, npcDeath, transform.parent.GetComponent<NPCGroupController>());
+        npcUnlockDoor.SetDependencies(npcPatrol, npcChase, npcDeath, npcCover, transform.parent.GetComponent<NPCGroupController>());
 
         npcStateMachine.changeState(npcPatrol);
     }

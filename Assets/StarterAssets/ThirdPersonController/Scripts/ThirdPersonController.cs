@@ -100,6 +100,9 @@ namespace StarterAssets
         private int _animIDFreeFall;
         private int _animIDMotionSpeed;
 
+        private float defaultHeight;
+        private float defaultCenterY;
+
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
 #endif
@@ -152,6 +155,9 @@ namespace StarterAssets
             // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
+
+            defaultHeight = GetComponent<CharacterController>().height;
+            defaultCenterY = GetComponent<CharacterController>().center.y;
         }
 
         private void Update()
@@ -220,10 +226,21 @@ namespace StarterAssets
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
             targetSpeed = _input.crouch ? CrouchedSpeed : targetSpeed;
 
-            if(_input.crouch)
+            CharacterController cc = GetComponent<CharacterController>();
+
+            if (_input.crouch) { 
                 _animator.SetBool("Crouch", true);
-            else
+                if(cc != null) {
+                    cc.height = 1.4f;
+                    cc.center = new Vector3(cc.center.x, 0.7f, cc.center.z);
+                }
+            } else { 
                 _animator.SetBool("Crouch", false);
+                if(cc != null) {
+                    cc.height = defaultHeight;
+                    cc.center = new Vector3(cc.center.x, defaultCenterY, cc.center.z);
+                }
+            }
 
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
