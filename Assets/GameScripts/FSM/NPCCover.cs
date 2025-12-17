@@ -95,8 +95,8 @@ public class NPCCover : IState
     {
         if (wait)
         {
-            controller.setTriggerAnim("Idle");
             timer += Time.deltaTime;
+            controller.setTriggerAnim("Idle");
 
             Vector3 lookDir = center - controller.transform.position;
             lookDir.y = 0;
@@ -104,8 +104,8 @@ public class NPCCover : IState
             if (controller.getNPCIndex() == secondNPC_cover)
                 lookDir = -lookDir;
 
-            controller.transform.rotation =
-                Quaternion.RotateTowards(
+            if (lookDir != Vector3.zero)
+                controller.transform.rotation = Quaternion.RotateTowards(
                     controller.transform.rotation,
                     Quaternion.LookRotation(lookDir),
                     Time.deltaTime * 180f
@@ -117,6 +117,7 @@ public class NPCCover : IState
             {
                 wait = false;
                 timer = 0f;
+                agent.SetDestination(waypoints[index].position);
             }
             return;
         }
@@ -124,21 +125,24 @@ public class NPCCover : IState
         if (waypoints.Count == 0) return;
 
         Vector3 targetPos = waypoints[index].position;
+        bool isSecond = controller.getNPCIndex() == secondNPC_cover;
 
-        if (controller.getNPCIndex() == secondNPC_cover)
+        if (isSecond)
         {
             GameObject[] npcs = GameObject.FindGameObjectsWithTag("NPC");
             GameObject targetNPC = null;
-            float shortestDistance = Mathf.Infinity;
+            float shortest = Mathf.Infinity;
 
             foreach (GameObject npc in npcs)
             {
                 if (npc == controller.gameObject) continue;
+                NPCController c = npc.GetComponent<NPCController>();
+                if (!c || !c.isAlive()) continue;
 
-                float distance = Vector3.Distance(controller.transform.position, npc.transform.position);
-                if (distance < shortestDistance && npc.GetComponent<NPCController>().isAlive())
+                float dist = Vector3.Distance(controller.transform.position, npc.transform.position);
+                if (dist < shortest)
                 {
-                    shortestDistance = distance;
+                    shortest = dist;
                     targetNPC = npc;
                 }
             }
@@ -146,8 +150,7 @@ public class NPCCover : IState
             if (targetNPC != null)
             {
                 targetPos = targetNPC.transform.position;
-
-                //agent.updateRotation = false;
+                agent.updateRotation = false;
                 agent.SetDestination(targetPos);
 
                 Vector3 dir = controller.transform.position - targetPos;
@@ -155,36 +158,30 @@ public class NPCCover : IState
                 if (dir != Vector3.zero)
                     controller.transform.rotation = Quaternion.LookRotation(dir);
 
-
-                float dist = Vector3.Distance(controller.transform.position, targetPos);
-                if (dist <= agent.stoppingDistance)
-                {
+                if (agent.velocity.sqrMagnitude < 0.01f)
                     controller.setTriggerAnim("Idle");
-                    agent.ResetPath();
-                }else
+                else
                     controller.setTriggerAnim("WalkingBackwards");
+
+                if (Vector3.Distance(controller.transform.position, targetPos) <= agent.stoppingDistance)
+                    agent.ResetPath();
+
                 return;
             }
-        }else
+        }
+
+        agent.updateRotation = true;
+        agent.SetDestination(targetPos);
+
+        if (agent.velocity.sqrMagnitude < 0.01f)
+            controller.setTriggerAnim("Idle");
+        else
             controller.setTriggerAnim("Walking");
 
-        float d = Vector3.Distance(waypoints[index].position, controller.transform.position);
-        if (d <= minDistanceToPoint)
+        if (Vector3.Distance(controller.transform.position, targetPos) <= minDistanceToPoint)
         {
             index = (index + 1) % waypoints.Count;
             wait = true;
-            return;
-        }
-
-        agent.updateRotation = controller.getNPCIndex() != secondNPC_cover;
-        agent.SetDestination(targetPos);
-
-        if (controller.getNPCIndex() == secondNPC_cover)
-        {
-            Vector3 dir = controller.transform.position - targetPos;
-            dir.y = 0;
-            if (dir != Vector3.zero)
-                controller.transform.rotation = Quaternion.LookRotation(dir);
         }
     }
 

@@ -40,6 +40,14 @@ public class NPCPatrol : IState
         waypoints = controller.waypoints;
         ComputeCenter();
         controller.setTriggerAnim("Idle");
+
+        waypoints = controller.waypoints;
+
+        if (agent.enabled && agent.isOnNavMesh)
+        {
+            agent.ResetPath();
+            agent.SetDestination(waypoints[index].position);
+        }
     }
 
     void IState.Update(){
@@ -67,29 +75,33 @@ public class NPCPatrol : IState
 
     void Patrol()
     {
+
+        if (!agent.hasPath && !wait) {
+            agent.SetDestination(waypoints[index].position);
+        }
+
         if (wait){
             timer += Time.deltaTime;
+
             controller.transform.rotation =
                 Quaternion.RotateTowards(
                     controller.transform.rotation,
-                    Quaternion.LookRotation(center - controller.transform.position),
+                    Quaternion.LookRotation(new Vector3(center.x - controller.transform.position.x, 0f, center.z - controller.transform.position.z)),
                     Time.deltaTime * 180f
                 );
 
             controller.setCenterpoint(center);
 
-            if (timer >= controller.TimePatrol)
-            {
+            if (timer >= controller.TimePatrol){
                 wait = false;
                 timer = 0f;
+                agent.SetDestination(waypoints[index].position);
+                controller.setTriggerAnim("Walking");
+            } else {
+                controller.setTriggerAnim("Idle");
             }
-            controller.setTriggerAnim("Idle");
             return;
         }
-
-        agent.updateRotation = true;
-
-        if (waypoints.Count == 0) return;
 
         float d = Vector3.Distance(waypoints[index].position, controller.transform.position);
         if (d <= minDistanceToPoint){
@@ -98,8 +110,10 @@ public class NPCPatrol : IState
             return;
         }
 
-        agent.SetDestination(waypoints[index].position);
-        controller.setTriggerAnim("Walking");
+        if (agent.velocity.magnitude > 0.1f)
+            controller.setTriggerAnim("Walking");
+        else if (agent.velocity.magnitude <= 0.1f )
+            controller.setTriggerAnim("Idle");
     }
 
     void ComputeCenter()

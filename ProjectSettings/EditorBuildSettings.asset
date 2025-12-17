@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Fase_de_teste.unity
-    guid: 498f1fd2ddf8ec946b0208cb49b113b9
+    path: Assets/Scenes/_Fase1.unity
+    guid: a628b0ada02753d4f8bc708969998829
   - enabled: 1
     path: Assets/Scenes/GameWin_GameOver.unity
     guid: 5e99aa4efbb08574ab9e52f6047ee756

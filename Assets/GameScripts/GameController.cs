@@ -14,6 +14,7 @@ public class GameController : MonoBehaviour
     [SerializeField] SceneAsset GameWin_GameOver;
     [SerializeField] SceneAsset Phase1;
     private bool gameEnding = false;
+    public float timeScale = 1f;
 
     private bool win = false;
 
@@ -50,6 +51,8 @@ public class GameController : MonoBehaviour
            SceneManager.LoadScene(Phase1.name);
            win = false;
         }
+
+        setTime();
     }
 
     public void endGame(bool status)
@@ -78,5 +81,10 @@ public class GameController : MonoBehaviour
         GameObject panel = GameObject.Find("EndPanel");
         panel.transform.GetChild(0).gameObject.SetActive(win);
         panel.transform.GetChild(1).gameObject.SetActive(!win);
+    }
+
+    public void setTime()
+    {
+        Time.timeScale = timeScale;
     }
 }
